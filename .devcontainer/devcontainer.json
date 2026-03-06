@@ -1,0 +1,16 @@
+{
+  "name": "norcorrdiff dev",
+  "build": {
+    "dockerfile": "../Dockerfile.dev"
+  },
+  "runArgs": [
+    "--gpus", "all"
+  ],
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+  "mounts": [
+    "source=${localEnv:HOME}/ml-ds_data,target=/workspace/data,type=bind",
+    "source=${localEnv:HOME}/norcorrdiff_results,target=/workspace/results,type=bind"
+  ]
+}
+

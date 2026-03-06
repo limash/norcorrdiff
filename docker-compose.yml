@@ -1,0 +1,7 @@
+services:
+  norcorrdiff:
+    build: .
+    gpus: all
+    volumes:
+      - ~/ml-ds_data:/workspace/data
+      - ~/norcorrdiff_results:/workspace/results
