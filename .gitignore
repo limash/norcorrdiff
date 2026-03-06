@@ -208,4 +208,7 @@ __marimo__/
 
 /data
 /results
+/output
+/tensorboard
+/wandb
 

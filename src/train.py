@@ -109,7 +109,7 @@ def profiler_emit_nvtx():
 
 
 # Train the CorrDiff model using the configurations in "conf/config_training.yaml"
-@hydra.main(version_base="1.2", config_path="conf", config_name="config_training")
+@hydra.main(version_base="1.2", config_path="conf", config_name="config_training_carra2_regression")
 def main(cfg: DictConfig) -> None:
     # Initialize distributed environment for training
     DistributedManager.initialize()
