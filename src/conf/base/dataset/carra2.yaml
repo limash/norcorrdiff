@@ -18,21 +18,4 @@
 type: carra2
 # Path to data file. Must be overridden.
 data_path: ???
-# Indices of input channels
-in_channels: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
-# Indices of output channels
-out_channels: [19, 20, 21]
-# Shape of the image
-img_shape_x: 400  # domain width
-img_shape_y: 1000  # domain height
-# Add grid coordinates to the image
-add_grid: true
-# Factor to downscale the image
-ds_factor: 4
-# Path to min and max values of the data
-min_path: null
-max_path: null
-# Path to global means of the data
-global_means_path: null
-# Path to global stds of the data
-global_stds_path: null
+stats_file: ???

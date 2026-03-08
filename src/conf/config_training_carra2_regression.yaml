@@ -61,6 +61,7 @@ defaults:
 dataset:
     # type: ./src/datasets/carra2.py::carra2
     data_path: ./data/input_data/data.zarr
+    stats_file: ./data/input_data/stats.zarr
 
 # Training parameters
 training:
