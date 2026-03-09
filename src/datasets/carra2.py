@@ -17,26 +17,30 @@
 """Streaming images and labels from datasets created with dataset_tool.py."""
 
 import logging
-import random
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
 import cftime
-import cv2
 import numpy as np
 import torch
-import xarray as xr
 import zarr
 from hydra.utils import to_absolute_path
-from torch.utils.data import Dataset, Subset
 
 from datasets.base import ChannelMetadata, DownscalingDataset
-from datasets.img_utils import reshape_fields
-from datasets.norm import denormalize, normalize
 
 logger = logging.getLogger(__file__)
 EPS = 1e-6
+
+
+def normalize(x, means, stds):
+    x = (x - means) / stds
+    return x
+
+
+def denormalize(x, means, stds):
+    x = x * stds + means
+    return x
 
 
 @dataclass(frozen=True)
@@ -53,15 +57,16 @@ class ZarrVariableDiscovery:
         target: str | None = None,
         static_candidates: Sequence[str] = ("x_lsm", "x_orog"),
     ):
-        self.targets = [target, ]
+        self.targets = [target] if target is not None else None
         self.static_candidates = tuple(static_candidates)
 
-    def discover(self, data: xr.Dataset) -> VariableGroups:
+    def discover(self, data: zarr.Group) -> VariableGroups:
+        array_names = list(data.array_keys())
         dynamic_inputs = sorted(
             [
                 name
-                for name, array in data.data_vars.items()
-                if name.startswith("x_") and array.ndim == 3
+                for name in array_names
+                if name.startswith("x_") and data[name].ndim == 3
             ]
         )
         static_inputs = [
@@ -73,8 +78,8 @@ class ZarrVariableDiscovery:
             self.targets = sorted(
                 [
                     name
-                    for name, array in data.data_vars.items()
-                    if name.startswith("y_") and array.ndim == 3
+                    for name in array_names
+                    if name.startswith("y_") and data[name].ndim == 3
                 ]
             )
 
@@ -93,7 +98,7 @@ class ZarrVariableDiscovery:
 class ZarrNormalizationStats:
     def __init__(self, stats_path: str | Path):
         self.stats_path = Path(stats_path)
-        self.stats = xr.open_zarr(self.stats_path)
+        self.stats = zarr.open_group(str(self.stats_path), mode="r")
 
     def tensor_stats(
         self, variables: Sequence[str]
@@ -113,7 +118,9 @@ class ZarrNormalizationStats:
         mean_key = f"{variable}_mean"
         std_key = f"{variable}_std"
         if mean_key in self.stats and std_key in self.stats:
-            return float(self.stats[mean_key].values), float(self.stats[std_key].values)
+            return float(np.asarray(self.stats[mean_key][()])), float(
+                np.asarray(self.stats[std_key][()])
+            )
 
         raise ValueError(
             f"Could not infer mean/std format for variable '{variable}' in {self.stats_path}."
@@ -136,21 +143,19 @@ class ZarrDataset(DownscalingDataset):
         super().__init__()
         self.path = Path(data_path)
 
-        # chunks here are dask chunks, not zarr chunks
-        data = xr.open_zarr(self.path, consolidated=True, chunks=None)
-        self.data = None
+        self.data = self._open_group(self.path)
 
         discovery = ZarrVariableDiscovery(target="y_t2m")
-        self.variable_groups = discovery.discover(data)
+        self.variable_groups = discovery.discover(self.data)
 
         self.input_vars = (
             self.variable_groups.dynamic_inputs + self.variable_groups.static_inputs
         )
         self.target_vars = self.variable_groups.targets
-        total_samples = int(data[self.variable_groups.dynamic_inputs[0]].shape[0])
+        total_samples = int(self.data[self.variable_groups.dynamic_inputs[0]].shape[0])
         self.indices = np.asarray(np.arange(total_samples), dtype=np.int64)
 
-        self.static_tensor = self._load_static_tensor(data)
+        self.static_tensor = self._load_static_tensor(self.data)
 
         stats = ZarrNormalizationStats(stats_file)
         self.input_means, self.input_stds = stats.tensor_stats(self.input_vars)
@@ -158,24 +163,24 @@ class ZarrDataset(DownscalingDataset):
 
     def _load_static_tensor(self, data) -> torch.Tensor:
         static = np.stack(
-            [data[var].values for var in self.variable_groups.static_inputs], axis=0
+            [np.asarray(data[var][:]) for var in self.variable_groups.static_inputs],
+            axis=0,
         )
         return torch.tensor(static, dtype=torch.float32)
+
+    @staticmethod
+    def _open_group(path: str | Path) -> zarr.Group:
+        return zarr.open_group(str(path), mode="r")
 
     def __len__(self) -> int:
         return int(self.indices.size)
 
-    def _ensure_open(self):
-        if self.data is None:
-            self.data = xr.open_zarr(self.path, consolidated=True, chunks=None)
-
     def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
-        self._ensure_open()
         time_index = int(self.indices[index])
 
         dynamic = np.stack(
             [
-                self.data[var].isel({"time": time_index}).values
+                np.asarray(self.data[var][time_index, ...])
                 for var in self.variable_groups.dynamic_inputs
             ],
             axis=0,
@@ -185,12 +190,15 @@ class ZarrDataset(DownscalingDataset):
 
         targets = np.stack(
             [
-                self.data[var].isel({"time": time_index}).values
+                np.asarray(self.data[var][time_index, ...])
                 for var in self.variable_groups.targets
             ],
             axis=0,
         )
         y = torch.tensor(targets, dtype=torch.float32)
+
+        y = self.normalize_output(y)
+        x = self.normalize_input(x)
 
         return y, x
 
@@ -212,13 +220,11 @@ class ZarrDataset(DownscalingDataset):
 
     def longitude(self):
         """The longitude. useful for plotting"""
-        self._ensure_open()
-        return self.data["longitude"]
+        return np.asarray(self.data["longitude"][:])
 
     def latitude(self):
         """The latitude. useful for plotting"""
-        self._ensure_open()
-        return self.data["latitude"]
+        return np.asarray(self.data["latitude"][:])
 
     def input_channels(self):
         """Metadata for the input channels. A list of dictionaries, one for each channel"""
@@ -230,10 +236,11 @@ class ZarrDataset(DownscalingDataset):
 
     def _read_time(self):
         """The vector of time coordinate has length (self)"""
-        self._ensure_open()
-        return cftime.num2date(
-            self.data["time"], units=self.data["time"].attrs["units"]
-        )
+        time_data = self.data["time"]
+        time_values = np.asarray(time_data[:])
+        time_units = time_data.attrs["units"]
+        time_calendar = time_data.attrs.get("calendar", "standard")
+        return cftime.num2date(time_values, units=time_units, calendar=time_calendar)
 
     def time(self):
         """The vector of time coordinate has length (self)"""
@@ -242,7 +249,6 @@ class ZarrDataset(DownscalingDataset):
 
     def image_shape(self):
         """Get the shape of the image (same for input and output)."""
-        self._ensure_open()
         return self.data["y_t2m"].shape[-2:]
 
     def info(self):

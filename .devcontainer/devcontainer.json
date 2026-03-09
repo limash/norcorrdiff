@@ -4,7 +4,8 @@
     "dockerfile": "../Dockerfile.dev"
   },
   "runArgs": [
-    "--gpus", "all"
+    "--gpus", "all",
+    "--shm-size=8g"
   ],
   "workspaceFolder": "/workspace",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",

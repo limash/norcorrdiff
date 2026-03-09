@@ -19,7 +19,7 @@ hydra:
           chdir: false
           name: carra2_regression
     run:
-          dir: ./output/${hydra:job.name}
+          dir: ./results/${hydra:job.name}
     searchpath:
           - pkg://conf/base # Do not modify
 
@@ -75,7 +75,7 @@ training:
 wandb:
     mode: offline
     # Configure whether to use wandb: "offline", "online", "disabled"
-    results_dir: "./wandb"
+    results_dir: "./results/wandb"
     # Directory to store wandb results
     watch_model: false
     # If true, wandb will track model parameters and gradients

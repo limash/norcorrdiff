@@ -117,7 +117,7 @@ def main(cfg: DictConfig) -> None:
 
     # Initialize loggers
     if dist.rank == 0:
-        writer = SummaryWriter(log_dir="tensorboard")
+        writer = SummaryWriter(log_dir="results/tensorboard")
     logger = PythonLogger("main")  # General python logger
     logger0 = RankZeroLoggingWrapper(logger, dist)  # Rank 0 logger
     initialize_wandb(
@@ -151,7 +151,7 @@ def main(cfg: DictConfig) -> None:
     amp_dtype = torch.float16 if (fp_optimizations == "amp-fp16") else torch.bfloat16
     logger.info(f"Saving the outputs in {os.getcwd()}")
     checkpoint_dir = get_checkpoint_dir(
-        str(cfg.training.io.get("checkpoint_dir", ".")), cfg.model.name
+        str(cfg.training.io.get("checkpoint_dir", "results/")), cfg.model.name
     )
     if cfg.training.hp.batch_size_per_gpu == "auto":
         cfg.training.hp.batch_size_per_gpu = (
