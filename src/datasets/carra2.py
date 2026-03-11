@@ -38,7 +38,7 @@ def normalize(x, means, stds):
     return x
 
 
-def denormalize(x, stds, means):
+def denormalize(x, means, stds):
     # If using numpy arrays
     if isinstance(x, np.ndarray):
         if isinstance(stds, torch.Tensor):
