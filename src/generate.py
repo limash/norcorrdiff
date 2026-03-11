@@ -50,7 +50,7 @@ from physicsnemo.experimental.models.diffusion.preconditioning import (
 from physicsnemo.utils.logging import PythonLogger, RankZeroLoggingWrapper
 
 
-@hydra.main(version_base="1.2", config_path="conf", config_name="config_generate")
+@hydra.main(version_base="1.2", config_path="conf", config_name="config_generate_carra2.yaml")
 def main(cfg: DictConfig) -> None:
     """Generate random images using the techniques described in the paper
     "Elucidating the Design Space of Diffusion-Based Generative Models".
@@ -64,7 +64,7 @@ def main(cfg: DictConfig) -> None:
     # Initialize logger
     logger = PythonLogger("generate")  # General python logger
     logger0 = RankZeroLoggingWrapper(logger, dist)
-    logger.file_logging("generate.log")
+    logger.file_logging("results/generate.log")
 
     # Handle the batch size
     seeds = list(np.arange(cfg.generation.num_ensembles))
@@ -320,7 +320,7 @@ def main(cfg: DictConfig) -> None:
         return
 
     # generate images
-    output_path = getattr(cfg.generation.io, "output_filename", "corrdiff_output.nc")
+    output_path = getattr(cfg.generation.io, "output_filename", "results/corrdiff_output.nc")
     logger0.info(f"Generating images, saving results to {output_path}...")
     batch_size = 1
     warmup_steps = min(len(times) - 1, 2)
