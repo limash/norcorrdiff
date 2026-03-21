@@ -61,10 +61,10 @@ class ZarrVariableDiscovery:
     def __init__(
         self,
         *,
-        target: str | None = None,
+        targets: Sequence[str] | None = None,
         static_candidates: Sequence[str] = ("x_lsm", "x_orog"),
     ):
-        self.targets = [target] if target is not None else None
+        self.targets = targets if targets is not None else None
         self.static_candidates = tuple(static_candidates)
 
     def discover(self, data: zarr.Group) -> VariableGroups:
@@ -152,7 +152,7 @@ class ZarrDataset(DownscalingDataset):
 
         self.data = self._open_group(self.path)
 
-        discovery = ZarrVariableDiscovery(target="y_t2m")
+        discovery = ZarrVariableDiscovery()
         self.variable_groups = discovery.discover(self.data)
 
         self.input_vars = (

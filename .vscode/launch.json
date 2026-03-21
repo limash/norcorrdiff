@@ -5,12 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "train",
+            "name": "train_regression",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/src/train.py",
             "console": "integratedTerminal",
             "justMyCode": false,
+            "args": [
+                "++training.hp.total_batch_size=64", 
+                "--config-name=config_training_carra2_regression.yaml",
+            ],
         },
         {
             "name": "generate",
