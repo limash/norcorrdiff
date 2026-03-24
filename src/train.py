@@ -111,13 +111,17 @@ def profiler_emit_nvtx():
 # Train the CorrDiff model using the configurations in "conf/config_training.yaml"
 @hydra.main(version_base="1.2", config_path="conf", config_name="config_training")
 def main(cfg: DictConfig) -> None:
+    print("CUDA available:", torch.cuda.is_available())
+    print("GPU name:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "None")
     # Initialize distributed environment for training
     DistributedManager.initialize()
     dist = DistributedManager()
+    
+    results_dir = cfg.training.io["results_dir"]
 
     # Initialize loggers
     if dist.rank == 0:
-        writer = SummaryWriter(log_dir="results/tensorboard")
+        writer = SummaryWriter(log_dir=os.path.join(results_dir, "tensorboard"))
     logger = PythonLogger("main")  # General python logger
     logger0 = RankZeroLoggingWrapper(logger, dist)  # Rank 0 logger
     initialize_wandb(
@@ -150,9 +154,7 @@ def main(cfg: DictConfig) -> None:
     enable_amp = fp_optimizations.startswith("amp")
     amp_dtype = torch.float16 if (fp_optimizations == "amp-fp16") else torch.bfloat16
     logger.info(f"Saving the outputs in {os.getcwd()}")
-    checkpoint_dir = get_checkpoint_dir(
-        str(cfg.training.io.get("checkpoint_dir", "results/")), cfg.model.name
-    )
+    checkpoint_dir = get_checkpoint_dir(str(results_dir), cfg.model.name)
     if cfg.training.hp.batch_size_per_gpu == "auto":
         cfg.training.hp.batch_size_per_gpu = (
             cfg.training.hp.total_batch_size // dist.world_size

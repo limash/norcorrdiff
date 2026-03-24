@@ -1,0 +1,15 @@
+workerPoolSpecs:
+  - machineSpec:
+      machineType: n1-highmem-4
+      acceleratorType: NVIDIA_TESLA_T4
+      acceleratorCount: 1
+    replicaCount: 1
+    containerSpec:
+      imageUri: europe-west1-docker.pkg.dev/norcorrdiff/docker-repo/norcorrdiff:latest
+      command:
+        - python
+        - src/train.py
+      args:
+        - "++training.hp.total_batch_size=8"
+        - "--config-name=config_training_carra2_regression_gcp.yaml"
+

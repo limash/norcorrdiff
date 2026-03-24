@@ -59,23 +59,26 @@ defaults:
 # Modify or add below parameters that should be passed as argument to the
 # user-defined dataset class.
 dataset:
-    # type: ./src/datasets/carra2.py::carra2
-    data_path: ./data/input_data/data.zarr
-    stats_file: ./data/input_data/stats.zarr
+    data_path: /gcs/norcorrdiff/input_data/data.zarr
+    stats_file: /gcs/norcorrdiff/input_data/stats.zarr
 
 # Training parameters
 training:
     hp:
-        training_duration: 200000000
         # Training duration based on the number of processed samples
+        training_duration: 1000000
+        total_batch_size: 256
         lr_rampup: 10000000
         # Rampup for learning rate, in number of samples
+    io:
+        regression_checkpoint_path: null
+        results_dir: /gcs/norcorrdiff/results
 
 # Parameters for wandb logging
 wandb:
     mode: offline
     # Configure whether to use wandb: "offline", "online", "disabled"
-    results_dir: "./results/wandb"
+    results_dir: "/gcs/norcorrdiff/results/wandb"
     # Directory to store wandb results
     watch_model: false
     # If true, wandb will track model parameters and gradients
