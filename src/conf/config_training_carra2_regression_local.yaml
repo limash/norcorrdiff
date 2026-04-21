@@ -59,8 +59,8 @@ defaults:
 # Modify or add below parameters that should be passed as argument to the
 # user-defined dataset class.
 dataset:
-    data_path: ./data/input_data/data.zarr
-    stats_file: ./data/input_data/stats.zarr
+    data_path: ./data/input_data_era5tocarra2/data.zarr
+    stats_file: ./data/input_data_era5tocarra2/stats.zarr
 
 # Training parameters
 training:
