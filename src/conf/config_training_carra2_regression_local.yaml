@@ -76,7 +76,7 @@ training:
 
 # Parameters for wandb logging
 wandb:
-    mode: offline
+    mode: online
     # Configure whether to use wandb: "offline", "online", "disabled"
     results_dir: "./results/wandb"
     # Directory to store wandb results

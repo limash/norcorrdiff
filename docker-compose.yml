@@ -6,3 +6,8 @@ services:
       - ~/ml-ds_data:/workspace/data
       - ~/norcorrdiff_results:/workspace/results
     shm_size: "1gb"
+    environment:
+      WANDB_API_KEY: ${WANDB_API_KEY}
+      WANDB_ENTITY: ${WANDB_ENTITY}
+      WANDB_PROJECT: ${WANDB_PROJECT}
+

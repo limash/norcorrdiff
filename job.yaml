@@ -5,7 +5,7 @@ workerPoolSpecs:
       acceleratorCount: 1
     replicaCount: 1
     containerSpec:
-      imageUri: europe-west1-docker.pkg.dev/norcorrdiff/docker-repo/norcorrdiff:latest
+      imageUri: europe-west1-docker.pkg.dev/nivatest-1/vertex-images/norcorrdiff:latest
       command:
         - python
         - src/train.py

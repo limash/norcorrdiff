@@ -59,8 +59,8 @@ defaults:
 # Modify or add below parameters that should be passed as argument to the
 # user-defined dataset class.
 dataset:
-    data_path: /gcs/norcorrdiff/input_data/data.zarr
-    stats_file: /gcs/norcorrdiff/input_data/stats.zarr
+    data_path: /gcs/norcorrdiff/input_data_era5tocarra2/data.zarr
+    stats_file: /gcs/norcorrdiff/input_data_era5tocarra2/stats.zarr
 
 # Training parameters
 training:
@@ -76,7 +76,7 @@ training:
 
 # Parameters for wandb logging
 wandb:
-    mode: offline
+    mode: online
     # Configure whether to use wandb: "offline", "online", "disabled"
     results_dir: "/gcs/norcorrdiff/results/wandb"
     # Directory to store wandb results

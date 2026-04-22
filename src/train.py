@@ -125,13 +125,14 @@ def main(cfg: DictConfig) -> None:
     logger = PythonLogger("main")  # General python logger
     logger0 = RankZeroLoggingWrapper(logger, dist)  # Rank 0 logger
     initialize_wandb(
-        project="Modulus-Launch",
-        entity="Modulus",
+        project=os.getenv("WANDB_PROJECT"),
+        entity=os.getenv("WANDB_ENTITY"),
         name=f"CorrDiff-Training-{HydraConfig.get().job.name}",
         group="CorrDiff-DDP-Group",
         mode=cfg.wandb.mode,
         config=OmegaConf.to_container(cfg),
         results_dir=cfg.wandb.results_dir,
+        sync_tensorboard=True,
     )
 
     # Resolve and parse configs
