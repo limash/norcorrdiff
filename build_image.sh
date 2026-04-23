@@ -2,8 +2,7 @@
 
 set -euo pipefail
 
-PROJECT_ID="nivatest-1"
-PROJECT_NUMBER="945050556705"
+PROJECT_ID="niva-cd"
 REGION="europe-west1"
 REPO="vertex-images"
 IMAGE="norcorrdiff"

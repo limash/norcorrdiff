@@ -5,11 +5,18 @@ workerPoolSpecs:
       acceleratorCount: 1
     replicaCount: 1
     containerSpec:
-      imageUri: europe-west1-docker.pkg.dev/nivatest-1/vertex-images/norcorrdiff:latest
+      imageUri: europe-west1-docker.pkg.dev/niva-cd/vertex-images/norcorrdiff:latest
       command:
         - python
         - src/train.py
       args:
         - "++training.hp.total_batch_size=8"
         - "--config-name=config_training_carra2_regression_gcp.yaml"
+      env:
+        - name: WANDB_API_KEY
+          value: "${WANDB_API_KEY}"
+        - name: WANDB_ENTITY
+          value: "${WANDB_ENTITY}"
+        - name: WANDB_PROJECT
+          value: "${WANDB_PROJECT}"
 
