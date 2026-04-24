@@ -151,7 +151,7 @@ class NetCDFWriter:
         if has_lead_time:
             v = f.createVariable("time", "str", ("time"))
         else:
-            v = f.createVariable("time", "i8", ("time"))
+            v = f.createVariable("time", "f8", ("time"))
             v.calendar = "standard"
             v.units = "hours since 1990-01-01 00:00:00"
 
