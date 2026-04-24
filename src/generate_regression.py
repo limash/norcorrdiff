@@ -54,6 +54,21 @@ def _parse_time(s: str) -> cftime.DatetimeGregorian:
     )
 
 
+def _setup_input_wind_speed(writer, component_indices):
+    x_u10_idx, x_v10_idx = component_indices
+    writer.input_group.createVariable("wind_speed", "f", dimensions=("time", "y", "x"))
+    return (x_u10_idx, x_v10_idx)
+
+
+def _write_input_wind_speed(writer, dataset, image_lr, time_index, component_indices):
+    x_u10_idx, x_v10_idx = component_indices
+    image_lr_np = dataset.denormalize_input(image_lr.cpu().numpy())
+    input_u10 = image_lr_np[0, x_u10_idx]
+    input_v10 = image_lr_np[0, x_v10_idx]
+    input_wind_speed = (input_u10**2 + input_v10**2) ** 0.5
+    writer.write_input("wind_speed", time_index, input_wind_speed)
+
+
 def _setup_wind_speed_output(writer, output_channels):
     y_u10_idx, y_v10_idx = output_channels
     writer.truth_group.createVariable("wind_speed", "f", dimensions=("time", "y", "x"))
@@ -137,6 +152,17 @@ def main(cfg: DictConfig) -> None:
         input_channels=dataset.input_channels(),
         output_channels=dataset.output_channels(),
     )
+    input_channel_names = [
+        channel.name + channel.level for channel in dataset.input_channels()
+    ]
+    input_wind_component_indices = _setup_input_wind_speed(
+        writer,
+        (
+            input_channel_names.index("x_u10"),
+            input_channel_names.index("x_v10"),
+        ),
+    )
+
     output_channel_names = [
         channel.name + channel.level for channel in dataset.output_channels()
     ]
@@ -188,6 +214,13 @@ def main(cfg: DictConfig) -> None:
                 dataset_index,
             )
 
+            _write_input_wind_speed(
+                writer,
+                dataset,
+                image_lr,
+                time_index,
+                input_wind_component_indices,
+            )
             _write_wind_speed(
                 writer,
                 dataset,
