@@ -65,16 +65,7 @@ Or with default `latest`:
 - `WANDB_PROJECT`
 - `IMAGE_URI`
 
-### 3) Stream Logs
-
-```bash
-gcloud ai custom-jobs stream-logs <CUSTOM_JOB_NAME> --region=europe-west4
-```
-
-If GPU is unavailable, preflight will fail fast with a clear error message.
-
 ### Notes
 
 - Prefer immutable tags for reproducibility and to avoid stale `latest` pulls.
-- If GPU preflight still fails, the issue is typically CUDA/driver compatibility in the container/runtime stack.
 

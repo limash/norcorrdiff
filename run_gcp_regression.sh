@@ -11,7 +11,12 @@ IMAGE_URI="${IMAGE_URI:-${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE}:
 
 echo "Submitting job with image: ${IMAGE_URI}"
 
-envsubst '$WANDB_API_KEY $WANDB_ENTITY $WANDB_PROJECT $IMAGE_URI' < job.yaml | \
+env \
+  WANDB_API_KEY="${WANDB_API_KEY:-}" \
+  WANDB_ENTITY="${WANDB_ENTITY:-}" \
+  WANDB_PROJECT="${WANDB_PROJECT:-}" \
+  IMAGE_URI="${IMAGE_URI}" \
+  envsubst '$WANDB_API_KEY $WANDB_ENTITY $WANDB_PROJECT $IMAGE_URI' < job.yaml | \
   gcloud ai custom-jobs create \
     --display-name="norcorrdiff-regression" \
     --region="europe-west4" \

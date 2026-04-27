@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04
+FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -30,15 +30,15 @@ WORKDIR /workspace
 
 COPY requirements.txt .
 
-# 1) Pin Torch to 2.8.0
+# 1) Pin Torch to a CUDA 12.1 build that is broadly compatible with managed T4 hosts
 RUN pip install \
-    torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 \
-    --index-url https://download.pytorch.org/whl/cu128
+    torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 \
+    --index-url https://download.pytorch.org/whl/cu121
 
 # 2) Install matching PyG wheels
 RUN pip install \
     pyg_lib torch_scatter torch_sparse torch_cluster torch_geometric \
-    -f https://data.pyg.org/whl/torch-2.8.0+cu128.html
+    -f https://data.pyg.org/whl/torch-2.5.1+cu121.html
 
 # 3) Install PhysicsNeMo and your packages
 RUN pip install \

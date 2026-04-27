@@ -8,27 +8,13 @@ workerPoolSpecs:
       imageUri: "${IMAGE_URI}"
       command:
         - bash
-        - -lc
+        - -c
       args:
         - |
           set -euo pipefail
           echo "Running GPU preflight checks"
-          if command -v nvidia-smi >/dev/null 2>&1; then
-            nvidia-smi
-          else
-            echo "nvidia-smi not found in PATH"
-          fi
-          python - <<'PY'
-          import torch
-
-          print(f"torch={torch.__version__}")
-          print(f"torch.version.cuda={torch.version.cuda}")
-          print(f"cuda_available={torch.cuda.is_available()}")
-          print(f"device_count={torch.cuda.device_count()}")
-
-          if not torch.cuda.is_available():
-              raise SystemExit("CUDA is not available inside the container. Failing fast.")
-          PY
+          nvidia-smi
+          python src/gpu_preflight.py
           exec python src/train.py ++training.hp.total_batch_size=8 --config-name=config_training_carra2_regression_gcp.yaml
       env:
         - name: WANDB_API_KEY
