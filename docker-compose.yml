@@ -5,9 +5,11 @@ services:
     volumes:
       - ~/ml-ds_data:/workspace/data
       - ~/norcorrdiff_results:/workspace/results
+      - ~/.config/gcloud:/root/.config/gcloud:ro
     shm_size: "1gb"
     environment:
       WANDB_API_KEY: ${WANDB_API_KEY}
       WANDB_ENTITY: ${WANDB_ENTITY}
       WANDB_PROJECT: ${WANDB_PROJECT}
+      GOOGLE_CLOUD_PROJECT: ${GOOGLE_CLOUD_PROJECT}
 

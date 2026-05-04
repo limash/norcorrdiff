@@ -9,9 +9,13 @@
   ],
   "workspaceFolder": "/workspace",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+  "containerEnv": {
+    "GOOGLE_CLOUD_PROJECT": "${localEnv:GOOGLE_CLOUD_PROJECT}"
+  },
   "mounts": [
     "source=${localEnv:HOME}/ml-ds_data,target=/workspace/data,type=bind",
-    "source=${localEnv:HOME}/norcorrdiff_results,target=/workspace/results,type=bind"
+    "source=${localEnv:HOME}/norcorrdiff_results,target=/workspace/results,type=bind",
+    "source=${localEnv:HOME}/.config/gcloud,target=/root/.config/gcloud,type=bind,readonly"
   ]
 }
 

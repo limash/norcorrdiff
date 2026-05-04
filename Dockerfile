@@ -28,8 +28,6 @@ RUN python3.11 -m venv $VIRTUAL_ENV \
 
 WORKDIR /workspace
 
-COPY requirements.txt .
-
 # 1) Pin Torch 2.6.x (published on cu124 wheels) while keeping base image CUDA 12.1
 RUN pip install \
     torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 \
@@ -41,6 +39,7 @@ RUN pip install \
     -f https://data.pyg.org/whl/torch-2.6.0+cu124.html
 
 # 3) Install PhysicsNeMo and your packages
+COPY requirements.txt .
 RUN pip install \
     "nvidia-physicsnemo[cu12,utils-extras,mesh-extras,datapipes-extras,gnns] @ https://github.com/NVIDIA/physicsnemo/archive/refs/tags/v2.0.0.tar.gz" \
     "tensorboard>=2.16" \

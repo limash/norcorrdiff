@@ -1,3 +1,4 @@
+gcsfs>=2026.3.0
 netCDF4>=1.7.2
 hydra-core>=1.2.0
 omegaconf>=2.3.0
@@ -11,3 +12,5 @@ numba>=0.61.0
 scipy>=1.15.1
 typer>=0.16.0
 psutil>=6.0.0
+# warp-lang 1.13.0 removed wp.context.Device (now wp.Device); pin below that until physicsnemo is updated
+warp-lang<1.13.0

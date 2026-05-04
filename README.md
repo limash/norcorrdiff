@@ -23,36 +23,9 @@ This avoids long "frozen" runs that are actually CPU-only training.
 ./build_image.sh
 ```
 
-By default, `build_image.sh` tags the image with an immutable tag:
-
-- `<UTC timestamp>-<git sha>`
-
-and also updates `:latest`.
-
-It prints the final image URI as:
-
-```text
-IMAGE_URI=europe-west1-docker.pkg.dev/<project>/<repo>/<image>:<tag>
-```
-
-You can also pass a custom tag:
-
-```bash
-./build_image.sh my-tag
-```
+`build_image.sh` builds and pushes the image tagged as `:latest`.
 
 ### 2) Submit Vertex Job
-
-Use either an explicit immutable image URI or default to `latest`.
-
-Explicit immutable URI (recommended):
-
-```bash
-export IMAGE_URI="europe-west1-docker.pkg.dev/niva-cd/vertex-images/norcorrdiff:<tag>"
-./run_gcp_regression.sh
-```
-
-Or with default `latest`:
 
 ```bash
 ./run_gcp_regression.sh
@@ -64,8 +37,4 @@ Or with default `latest`:
 - `WANDB_ENTITY`
 - `WANDB_PROJECT`
 - `IMAGE_URI`
-
-### Notes
-
-- Prefer immutable tags for reproducibility and to avoid stale `latest` pulls.
 

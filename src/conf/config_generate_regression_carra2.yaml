@@ -27,8 +27,8 @@ defaults:
     - dataset: carra2
 
 dataset:
-    data_path: ./data/input_data_era5tocarra2/data.zarr
-    stats_file: ./data/input_data_era5tocarra2/stats.zarr
+    data_path: gs://norcorrdiff/input_data_era5tocarra2/data.zarr
+    stats_file: gs://norcorrdiff/input_data_era5tocarra2/stats.zarr
 
 generation:
     start_time: "2012-01-01T00:00:00"
@@ -36,5 +36,5 @@ generation:
     end_time: "2012-01-07T00:00:00"
     # str, ISO 8601 end of the inference period (inclusive)
     io:
-        reg_ckpt_filename: /workspace/results/checkpoints_regression/CorrDiffRegressionUNet.0.95000.mdlus
+        reg_ckpt_filename: gs://norcorrdiff/results/checkpoints_regression/CorrDiffRegressionUNet.0.210000.mdlus
         output_filename: results/regression_output.nc

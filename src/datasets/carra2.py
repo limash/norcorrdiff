@@ -88,8 +88,12 @@ class ZarrVariableDiscovery:
 
 class ZarrNormalizationStats:
     def __init__(self, stats_path: str | Path):
-        self.stats_path = Path(stats_path)
-        self.stats = zarr.open_group(str(self.stats_path), mode="r")
+        # Keep GCS paths as strings; Path() would corrupt the gs:// URI (gs:// → gs:/)
+        stats_path_str = str(stats_path)
+        self.stats_path: Path | str = (
+            stats_path_str if stats_path_str.startswith("gs://") else Path(stats_path_str)
+        )
+        self.stats = zarr.open_group(stats_path_str, mode="r")
 
     def tensor_stats(
         self, variables: Sequence[str]
@@ -132,7 +136,10 @@ class ZarrDataset(DownscalingDataset):
         stats_file: str | Path,
     ):
         super().__init__()
-        self.path = Path(data_path)
+        # Keep GCS paths as strings; Path() would corrupt the gs:// URI (gs:// → gs:/)
+        self.path: Path | str = (
+            data_path if str(data_path).startswith("gs://") else Path(data_path)
+        )
 
         self.data = self._open_group(self.path)
 
@@ -248,5 +255,6 @@ class ZarrDataset(DownscalingDataset):
 
 def get_zarr_dataset(*, data_path, **kwargs):
     """Get a Zarr dataset for training or evaluation."""
-    data_path = to_absolute_path(data_path)
+    if not str(data_path).startswith("gs://"):
+        data_path = to_absolute_path(data_path)
     return ZarrDataset(data_path=data_path, **kwargs)

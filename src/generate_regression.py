@@ -16,8 +16,11 @@ python generate_regression.py \\
 """
 
 import datetime
+import os
+import tempfile
 
 import cftime
+import fsspec
 import hydra
 import netCDF4 as nc
 import torch
@@ -30,6 +33,22 @@ from omegaconf import DictConfig, OmegaConf
 from physicsnemo import Module
 from physicsnemo.diffusion.generate import regression_step
 from physicsnemo.distributed import DistributedManager
+
+
+def _load_regression_net(path: str):
+    """Load a Module from a checkpoint, downloading from GCS to a temp file if needed."""
+    if path.startswith("gs://"):
+        with tempfile.NamedTemporaryFile(suffix=".mdlus", delete=False) as tmp:
+            tmp_path = tmp.name
+        try:
+            with fsspec.open(path, "rb") as remote_f:
+                with open(tmp_path, "wb") as local_f:
+                    local_f.write(remote_f.read())
+            return Module.from_checkpoint(tmp_path)
+        finally:
+            os.unlink(tmp_path)
+    else:
+        return Module.from_checkpoint(to_absolute_path(path))
 
 
 def _parse_time(s: str) -> cftime.DatetimeGregorian:
@@ -117,9 +136,7 @@ def main(cfg: DictConfig) -> None:
 
     # ---- Regression network -------------------------------------------------
     print(f"Loading regression network from {cfg.generation.io.reg_ckpt_filename}...")
-    net_reg = Module.from_checkpoint(
-        to_absolute_path(cfg.generation.io.reg_ckpt_filename)
-    )
+    net_reg = _load_regression_net(cfg.generation.io.reg_ckpt_filename)
     net_reg = net_reg.eval().to(device).to(memory_format=torch.channels_last)
     if hasattr(net_reg, "amp_mode"):
         net_reg.amp_mode = False
