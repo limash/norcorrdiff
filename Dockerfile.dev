@@ -30,19 +30,19 @@ WORKDIR /workspace
 
 COPY requirements.txt .
 
-# 1) Pin Torch to a CUDA 12.1 build that is broadly compatible with managed T4 hosts
+# 1) Pin Torch 2.6.x (published on cu124 wheels) while keeping base image CUDA 12.1
 RUN pip install \
-    torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 \
-    --index-url https://download.pytorch.org/whl/cu121
+    torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 \
+    --index-url https://download.pytorch.org/whl/cu124
 
 # 2) Install matching PyG wheels
 RUN pip install \
     pyg_lib torch_scatter torch_sparse torch_cluster torch_geometric \
-    -f https://data.pyg.org/whl/torch-2.5.1+cu121.html
+    -f https://data.pyg.org/whl/torch-2.6.0+cu124.html
 
 # 3) Install PhysicsNeMo and your packages
 RUN pip install \
-    "nvidia-physicsnemo[cu12,utils-extras,mesh-extras,datapipes-extras,gnns] @ https://github.com/NVIDIA/physicsnemo/archive/ccbf9a07b7e1b8cf926e638713df92639945a7ee.tar.gz" \
+    "nvidia-physicsnemo[cu12,utils-extras,mesh-extras,datapipes-extras,gnns] @ https://github.com/NVIDIA/physicsnemo/archive/refs/tags/v2.0.0.tar.gz" \
     "tensorboard>=2.16" \
     -r requirements.txt
 
