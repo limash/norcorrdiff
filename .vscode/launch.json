@@ -17,6 +17,18 @@
             ],
         },
         {
+            "name": "train_diffusion",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "++training.hp.total_batch_size=2", 
+                "--config-name=config_training_carra2_diffusion_local.yaml",
+            ],
+        },
+        {
             "name": "generate",
             "type": "debugpy",
             "request": "launch",

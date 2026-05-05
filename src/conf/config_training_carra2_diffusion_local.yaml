@@ -44,22 +44,22 @@ defaults:
 # user-defined dataset class.
 dataset:
     # type: ./src/datasets/carra2.py::carra2
-    data_path: ./data/input_data/data.zarr
-    stats_file: ./data/input_data/stats.zarr
+    data_path: ./data/input_data_era5tocarra2/data.zarr
+    stats_file: ./data/input_data_era5tocarra2/stats.zarr
 
 # Training parameters
 training:
     hp:
-        training_duration: 8000000
+        training_duration: 1000000
         # Training duration based on the number of processed samples
     io:
         print_progress_freq: 10000
-        regression_checkpoint_path: <regression_checkpoint.mdlus>
+        regression_checkpoint_path: /workspace/results/checkpoints_regression/CorrDiffRegressionUNet.0.205002.mdlus
         # Path to load the regression checkpoint
 
 # Parameters for wandb logging
 wandb:
-    mode: offline
+    mode: disabled
     # Configure whether to use wandb: "offline", "online", "disabled"
     results_dir: "./results/wandb"
     # Directory to store wandb results
