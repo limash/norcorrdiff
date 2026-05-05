@@ -45,7 +45,7 @@ defaults:
     #     `lt_aware_patched_diffusion`: similar to `patched_diffusion` but
     #       with lead time conditioning
 
-    - model_size: normal
+    - model_size: mini
     # The model size configuration.
     # Accepted values:
     #     `normal`: normal model size
@@ -59,7 +59,7 @@ defaults:
 # Modify or add below parameters that should be passed as argument to the
 # user-defined dataset class.
 dataset:
-    data_path: ./data/2023-01-24-cwb-4years.zarr
+    data_path: gs://norcorrdiff/taiwan_dataset/cwa_dataset/cwa_dataset.zarr
 
 # Training parameters
 training:
@@ -68,12 +68,15 @@ training:
         # Training duration based on the number of processed samples
         lr_rampup: 10000000
         # Rampup for learning rate, in number of samples
+    io:
+        regression_checkpoint_path: null
+        results_dir: /gcs/norcorrdiff/results/taiwan_regression
 
 # Parameters for wandb logging
 wandb:
     mode: offline
     # Configure whether to use wandb: "offline", "online", "disabled"
-    results_dir: "./wandb"
+    results_dir: ./wandb/taiwan_regression
     # Directory to store wandb results
     watch_model: false
     # If true, wandb will track model parameters and gradients

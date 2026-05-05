@@ -56,13 +56,13 @@ training:
         # Rampup for learning rate, in number of samples
     io:
         regression_checkpoint_path: null
-        results_dir: /gcs/norcorrdiff/results
+        results_dir: /gcs/norcorrdiff/results/carra2_regression
 
 # Parameters for wandb logging
 wandb:
     mode: online
     # Configure whether to use wandb: "offline", "online", "disabled"
-    results_dir: "/gcs/norcorrdiff/results/wandb"
+    results_dir: "/gcs/norcorrdiff/results/wandb/carra2_regression"
     # Directory to store wandb results
     watch_model: false
     # If true, wandb will track model parameters and gradients
