@@ -1,4 +1,4 @@
-results_dir: ./results/diffusion_050526
+results_dir: ./results/diffusion_carra2_050526
 # Base directory for all outputs (hydra logs, tensorboard, wandb, checkpoints).
 # Change this to redirect all output to a different location.
 
@@ -58,7 +58,7 @@ training:
         # Training duration based on the number of processed samples
     io:
         print_progress_freq: 10000
-        regression_checkpoint_path: /workspace/results/checkpoints_regression/CorrDiffRegressionUNet.0.205002.mdlus
+        regression_checkpoint_path: /workspace/results/regression_carra2_230426/checkpoints_regression/CorrDiffRegressionUNet.0.95000.mdlus
         # Path to load the regression checkpoint
         results_dir: ${results_dir}
 

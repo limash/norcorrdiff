@@ -1,9 +1,13 @@
+results_dir: ./results/regression_carra2_070526
+# Base directory for all outputs (hydra logs, tensorboard, wandb, checkpoints).
+# Change this to redirect all output to a different location.
+
 hydra:
     job:
           chdir: false
           name: carra2_regression
     run:
-          dir: ./results/${hydra:job.name}
+          dir: ${results_dir}/${hydra:job.name}
     searchpath:
           - pkg://conf/base # Do not modify
 
@@ -56,13 +60,13 @@ training:
         # Rampup for learning rate, in number of samples
     io:
         regression_checkpoint_path: null
-        results_dir: ./results
+        results_dir: ${results_dir}
 
 # Parameters for wandb logging
 wandb:
     mode: disabled
     # Configure whether to use wandb: "offline", "online", "disabled"
-    results_dir: "./results/wandb"
+    results_dir: ${results_dir}/wandb
     # Directory to store wandb results
     watch_model: false
     # If true, wandb will track model parameters and gradients
