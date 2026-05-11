@@ -13,7 +13,7 @@
             "justMyCode": false,
             "args": [
                 "++training.hp.total_batch_size=2", 
-                "--config-name=config_training_carra2_regression_local.yaml",
+                "--config-name=config_training_taiwan_regression_local.yaml",
             ],
         },
         {

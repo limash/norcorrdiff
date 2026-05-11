@@ -13,13 +13,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+results_dir: ./results/regression_cwb_110626
 
 hydra:
     job:
           chdir: false
           name: taiwan_regression
     run:
-          dir: ./output/${hydra:job.name}
+          dir: ${results_dir}/${hydra:job.name}
     searchpath:
           - pkg://conf/base # Do not modify
 
@@ -59,7 +61,7 @@ defaults:
 # Modify or add below parameters that should be passed as argument to the
 # user-defined dataset class.
 dataset:
-    data_path: gs://norcorrdiff/taiwan_dataset/cwa_dataset/cwa_dataset.zarr
+    data_path: ./data/cwa_dataset_storm.zarr
 
 # Training parameters
 training:
@@ -70,13 +72,18 @@ training:
         # Rampup for learning rate, in number of samples
     io:
         regression_checkpoint_path: null
-        results_dir: /gcs/norcorrdiff/results/taiwan_regression
+        results_dir: ${results_dir}
+
+# Additional parameters for validation
+validation:
+    train: false
+    all_times: false    
 
 # Parameters for wandb logging
 wandb:
-    mode: offline
+    mode: disabled
     # Configure whether to use wandb: "offline", "online", "disabled"
-    results_dir: ./wandb/taiwan_regression
+    results_dir: ${results_dir}/wandb
     # Directory to store wandb results
     watch_model: false
     # If true, wandb will track model parameters and gradients
