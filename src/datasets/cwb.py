@@ -528,3 +528,76 @@ def get_zarr_dataset(*, data_path, normalization="v1", all_times=False, **kwargs
     return ZarrDataset(
         dataset=zdataset, normalization=normalization, all_times=all_times, **kwargs
     )
+
+
+class ZarrDatasetCut(ZarrDataset):
+    """A ZarrDataset variant that returns a fixed square spatial snippet.
+
+    Inherits all channel selection, downsampling, and train/val splitting
+    from ZarrDataset. The only difference is that __getitem__ returns a
+    snippet_length × snippet_length crop starting at
+    (snippet_x_offset, snippet_y_offset) instead of the full image.
+
+    The crop is applied after normalization (which is per-channel in
+    _ZarrDataset), so the normalization statistics remain valid.
+    """
+
+    def __init__(
+        self,
+        dataset,
+        snippet_x_offset: int = 0,
+        snippet_y_offset: int = 0,
+        snippet_length: int = 128,
+        **kwargs,
+    ):
+        super().__init__(dataset, **kwargs)
+        self.snippet_x_offset = snippet_x_offset
+        self.snippet_y_offset = snippet_y_offset
+        self.snippet_length = snippet_length
+
+        x_end = snippet_x_offset + snippet_length
+        y_end = snippet_y_offset + snippet_length
+        if x_end > self.img_shape_x or y_end > self.img_shape_y:
+            raise ValueError(
+                f"Snippet [{snippet_x_offset}:{x_end}, {snippet_y_offset}:{y_end}] "
+                f"exceeds image shape ({self.img_shape_x}, {self.img_shape_y})."
+            )
+
+    def __getitem__(self, idx):
+        target, input = super().__getitem__(idx)
+        x0 = self.snippet_x_offset
+        y0 = self.snippet_y_offset
+        L = self.snippet_length
+        return target[:, y0 : y0 + L, x0 : x0 + L], input[:, y0 : y0 + L, x0 : x0 + L]
+
+    def image_shape(self):
+        """Get the shape of the snippet (height, width)."""
+        return (self.snippet_length, self.snippet_length)
+
+    def longitude(self):
+        """Get longitude values for the snippet."""
+        lon = self._dataset.longitude()
+        x0, y0, L = self.snippet_x_offset, self.snippet_y_offset, self.snippet_length
+        return lon[y0 : y0 + L, x0 : x0 + L]
+
+    def latitude(self):
+        """Get latitude values for the snippet."""
+        lat = self._dataset.latitude()
+        x0, y0, L = self.snippet_x_offset, self.snippet_y_offset, self.snippet_length
+        return lat[y0 : y0 + L, x0 : x0 + L]
+
+
+def get_zarr_dataset_cut(*, data_path, normalization="v1", all_times=False, **kwargs):
+    """Get a Zarr dataset that returns a fixed spatial snippet."""
+    data_path = to_absolute_path(data_path)
+    get_target_normalization = {
+        "v1": get_target_normalizations_v1,
+        "v2": get_target_normalizations_v2,
+    }[normalization]
+    logger.info(f"Normalization: {normalization}")
+    zdataset = _ZarrDataset(
+        data_path, get_target_normalization=get_target_normalization
+    )
+    return ZarrDatasetCut(
+        dataset=zdataset, normalization=normalization, all_times=all_times, **kwargs
+    )

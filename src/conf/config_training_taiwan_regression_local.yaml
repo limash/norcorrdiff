@@ -28,12 +28,13 @@ hydra:
 # Base parameters for dataset, model, training, and validation
 defaults:
 
-    - dataset: cwb
+    - dataset: cwb_cut
     # The dataset type for training.
     # Accepted values:
     #   `gefs_hrrr`: full GEFS-HRRR dataset for continental US.
     #   `hrrr_mini`: smaller HRRR dataset (continental US), for fast experiments.
     #   `cwb`: full CWB dataset for Taiwan.
+    #   `cwb_cut`: a variant of the CWB dataset that returns a fixed spatial snippet.
     #   `custom`: user-defined dataset. Parameters need to be specified below.
 
     - model: regression
@@ -62,6 +63,9 @@ defaults:
 # user-defined dataset class.
 dataset:
     data_path: ./data/cwa_dataset_storm.zarr
+    snippet_x_offset: 300
+    snippet_y_offset: 50
+    snippet_length: 128
 
 # Training parameters
 training:
