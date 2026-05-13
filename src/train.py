@@ -363,6 +363,13 @@ def main(cfg: DictConfig) -> None:
             gradient_as_bucket_view=True,
             static_graph=True,
         )
+
+    if dist.rank == 0:
+        report_model = model.module if isinstance(model, DistributedDataParallel) else model
+        total_params = sum(p.numel() for p in report_model.parameters())
+        logger0.info(f"Model total parameters: {total_params:,}")
+        logger0.info(f"Model structure:\n{report_model}")
+
     if cfg.wandb.watch_model and dist.rank == 0:
         wandb.watch(model)
 
