@@ -30,7 +30,6 @@ import nvtx
 import wandb
 
 from physicsnemo import Module
-from physicsnemo.models.diffusion_unets import CorrDiffRegressionUNet
 from physicsnemo.diffusion.preconditioners import EDMPrecondSuperResolution
 
 from physicsnemo.distributed import DistributedManager
@@ -57,6 +56,7 @@ from helpers.train_helpers import (
     handle_and_clip_gradients,
     is_time_for_periodic_task,
 )
+from networks.unet import CorrDiffRegressionUNet
 
 torch._dynamo.reset()
 # Increase the cache size limit
@@ -303,7 +303,7 @@ def main(cfg: DictConfig) -> None:
 
     if cfg.model.name == "regression":
         model = CorrDiffRegressionUNet(
-            img_in_channels=img_in_channels + model_args["N_grid_channels"],
+            img_in_channels=img_in_channels,
             **model_args,
         )
     elif (
@@ -325,7 +325,7 @@ def main(cfg: DictConfig) -> None:
         )
     elif cfg.model.name == "diffusion":
         model = edm_precond_super_res(
-            img_in_channels=img_in_channels + model_args["N_grid_channels"],
+            img_in_channels=img_in_channels,
             **model_args,
         )
     elif cfg.model.name == "patched_diffusion":

@@ -58,12 +58,19 @@ defaults:
     # The base training parameters. Determined by the model type.
 
 
+# Model parameters
+model:
+    model_args:
+        model_type: "SongUNet"
+        # Type of model architecture. Overrides default 'SongUNetPosEmbd'.
+
 # Dataset parameters. Used for `custom` dataset type.
 # Modify or add below parameters that should be passed as argument to the
 # user-defined dataset class.
 dataset:
     data_path: ./data/cwa_dataset_storm.zarr
-    snippet_x_offset: 300
+    all_times: true
+    snippet_x_offset: 250
     snippet_y_offset: 50
     snippet_length: 128
 

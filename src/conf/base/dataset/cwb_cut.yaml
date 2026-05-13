@@ -26,9 +26,9 @@ out_channels: [0, 1, 2, 3]
 img_shape_x: 448  # domain width
 img_shape_y: 448  # domain height
 # Add grid coordinates to the image
-add_grid: true
+add_grid: false
 # Factor to downscale the image
-ds_factor: 4
+ds_factor: 1
 # Path to min and max values of the data
 min_path: null
 max_path: null
@@ -38,6 +38,6 @@ global_means_path: null
 global_stds_path: null
 # Snippet parameters: cut a snippet_length x snippet_length region from the
 # full img_shape_x x img_shape_y image, starting at (snippet_x_offset, snippet_y_offset).
-snippet_x_offset: 0
-snippet_y_offset: 0
+snippet_x_offset: 250
+snippet_y_offset: 50
 snippet_length: 128
