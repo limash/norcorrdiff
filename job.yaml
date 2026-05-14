@@ -1,7 +1,7 @@
 workerPoolSpecs:
   - machineSpec:
-      machineType: n1-highmem-4
-      acceleratorType: NVIDIA_TESLA_T4
+      machineType: a2-highgpu-1g
+      acceleratorType: NVIDIA_TESLA_A100
       acceleratorCount: 1
     replicaCount: 1
     containerSpec:
@@ -15,7 +15,7 @@ workerPoolSpecs:
           echo "Running GPU preflight checks"
           nvidia-smi
           python src/gpu_preflight.py
-          exec python src/train.py ++training.hp.total_batch_size=8 --config-name=config_training_carra2_regression_gcp.yaml
+          exec python src/train.py ++training.hp.total_batch_size=64 --config-name=config_training_taiwan_regression_gcp.yaml
       env:
         - name: WANDB_API_KEY
           value: "${WANDB_API_KEY}"
