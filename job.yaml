@@ -15,7 +15,7 @@ workerPoolSpecs:
           echo "Running GPU preflight checks"
           nvidia-smi
           python src/gpu_preflight.py
-          exec python src/train.py ++training.hp.total_batch_size=128 --config-name=config_training_taiwan_regression_gcp.yaml
+          exec python src/train.py ++training.hp.total_batch_size=64 --config-name=config_training_taiwan_regression_gcp.yaml
       env:
         - name: WANDB_API_KEY
           value: "${WANDB_API_KEY}"

@@ -120,8 +120,8 @@ def main(cfg: DictConfig) -> None:
     results_dir = cfg.training.io["results_dir"]
 
     # Initialize loggers
-    if dist.rank == 0:
-        writer = SummaryWriter(log_dir=os.path.join(results_dir, "tensorboard"))
+    # wandb must be initialized before SummaryWriter so sync_tensorboard=True
+    # can hook into TensorBoard's writer at creation time.
     logger = PythonLogger("main")  # General python logger
     logger0 = RankZeroLoggingWrapper(logger, dist)  # Rank 0 logger
     initialize_wandb(
@@ -134,6 +134,8 @@ def main(cfg: DictConfig) -> None:
         results_dir=cfg.wandb.results_dir,
         sync_tensorboard=True,
     )
+    if dist.rank == 0:
+        writer = SummaryWriter(log_dir=os.path.join(results_dir, "tensorboard"))
 
     # Resolve and parse configs
     OmegaConf.resolve(cfg)
