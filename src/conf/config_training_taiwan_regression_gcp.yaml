@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-results_dir: /gcs/norcorrdiff/results/regression_cwb_130626
+results_dir: /gcs/norcorrdiff/results/regression_cwb_140626
 
 hydra:
     job:
@@ -75,6 +75,10 @@ dataset:
 
 # Training parameters
 training:
+    perf:
+        songunet_checkpoint_level: 1
+        dataloader_workers: 12
+        prefetch_factor: 4
     hp:
         training_duration: 200000000
         # Training duration based on the number of processed samples
