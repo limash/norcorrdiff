@@ -16,9 +16,9 @@
 
 import os
 import time
+import psutil
 from contextlib import nullcontext
 
-import psutil
 import hydra
 from hydra.utils import to_absolute_path
 from hydra.core.hydra_config import HydraConfig
@@ -214,7 +214,7 @@ def main(cfg: DictConfig) -> None:
         "lt_aware_patched_diffusion",
     ]:
         raise ValueError(
-            f"cfg.training.distribution should only be specified for diffusion models."
+            "cfg.training.distribution should only be specified for diffusion models."
         )
     if distribution not in ["normal", "student_t", None]:
         raise ValueError(f"Invalid distribution {distribution}")
@@ -525,6 +525,9 @@ def main(cfg: DictConfig) -> None:
     average_loss_running_mean = 0
     n_average_loss_running_mean = 1
     start_nimg = cur_nimg
+    current_lr = cfg.training.hp.lr  # updated each optimizer step; initialized here to avoid NameError on first ptt
+    _timing_accum = {"data_load": 0.0, "compute": 0.0, "total": 0.0}
+    _timing_accum_n = 0
     input_dtype = torch.float32
     if enable_amp:
         input_dtype = torch.float32
@@ -537,6 +540,9 @@ def main(cfg: DictConfig) -> None:
             while not done:
                 tick_start_nimg = cur_nimg
                 tick_start_time = time.time()
+                _iter_start = time.perf_counter()
+                _iter_data_load = 0.0
+                _iter_compute = 0.0
 
                 if cur_nimg - start_nimg == 24 * cfg.training.hp.total_batch_size:
                     logger0.info(f"Starting Profiler at {cur_nimg}")
@@ -554,6 +560,8 @@ def main(cfg: DictConfig) -> None:
                         with nvtx.annotate(
                             f"accumulation round {n_i}", color="Magenta"
                         ):
+                            # Data loading timing
+                            data_load_start = time.perf_counter()
                             with nvtx.annotate("loading data", color="green"):
                                 img_clean, img_lr, *lead_time_label = next(
                                     dataset_iterator
@@ -580,6 +588,7 @@ def main(cfg: DictConfig) -> None:
                                         .to(input_dtype)
                                         .contiguous()
                                     )
+                            _iter_data_load += time.perf_counter() - data_load_start
                             loss_fn_kwargs = {
                                 "net": model,
                                 "img_clean": img_clean,
@@ -607,11 +616,14 @@ def main(cfg: DictConfig) -> None:
                                 if patching is not None:
                                     patching.set_patch_num(patch_num_per_iter)
                                     loss_fn_kwargs.update({"patching": patching})
-                                with nvtx.annotate(f"loss forward", color="green"):
+                                # Forward pass timing
+                                forward_start = time.perf_counter()
+                                with nvtx.annotate("loss forward", color="green"):
                                     with torch.autocast(
                                         "cuda", dtype=amp_dtype, enabled=enable_amp
                                     ):
                                         loss = loss_fn(**loss_fn_kwargs)
+                                _iter_compute += time.perf_counter() - forward_start
 
                                 loss = loss.sum() / batch_size_per_gpu
                                 loss_accum += (
@@ -619,10 +631,13 @@ def main(cfg: DictConfig) -> None:
                                     / num_accumulation_rounds
                                     / len(patch_nums_iter)
                                 )
-                                with nvtx.annotate(f"loss backward", color="yellow"):
+                                # Backward pass timing
+                                backward_start = time.perf_counter()
+                                with nvtx.annotate("loss backward", color="yellow"):
                                     loss.backward()
+                                _iter_compute += time.perf_counter() - backward_start
 
-                    with nvtx.annotate(f"loss aggregate", color="green"):
+                    with nvtx.annotate("loss aggregate", color="green"):
                         loss_sum = torch.tensor([loss_accum], device=dist.device)
                         if dist.world_size > 1:
                             torch.distributed.barrier()
@@ -637,13 +652,7 @@ def main(cfg: DictConfig) -> None:
                     ) / n_average_loss_running_mean
                     n_average_loss_running_mean += 1
 
-                    if dist.rank == 0:
-                        writer.add_scalar("training_loss", average_loss, cur_nimg)
-                        writer.add_scalar(
-                            "training_loss_running_mean",
-                            average_loss_running_mean,
-                            cur_nimg,
-                        )
+                    # loss/memory written at print boundaries only (see ptt block below)
 
                     ptt = is_time_for_periodic_task(
                         cur_nimg,
@@ -654,6 +663,25 @@ def main(cfg: DictConfig) -> None:
                         rank_0_only=True,
                     )
                     if ptt:
+                        if dist.rank == 0 and _timing_accum_n > 0:
+                            avg_total_ms = _timing_accum["total"] / _timing_accum_n * 1000
+                            avg_data_ms = _timing_accum["data_load"] / _timing_accum_n * 1000
+                            avg_compute_ms = _timing_accum["compute"] / _timing_accum_n * 1000
+                            writer.add_scalar("loss/train", average_loss, cur_nimg)
+                            writer.add_scalar("loss/train_mean", average_loss_running_mean, cur_nimg)
+                            writer.add_scalar("lr", current_lr, cur_nimg)
+                            writer.add_scalar("timing/iter_ms", avg_total_ms, cur_nimg)
+                            writer.add_scalar("timing/data_ms", avg_data_ms, cur_nimg)
+                            writer.add_scalar("timing/compute_ms", avg_compute_ms, cur_nimg)
+                            writer.add_scalar("timing/data_fraction", avg_data_ms / avg_total_ms if avg_total_ms > 0 else 0, cur_nimg)
+                            writer.add_scalar("timing/compute_fraction", avg_compute_ms / avg_total_ms if avg_total_ms > 0 else 0, cur_nimg)
+                            writer.add_scalar("throughput/samples_per_sec", cfg.training.hp.total_batch_size * 1000 / avg_total_ms if avg_total_ms > 0 else 0, cur_nimg)
+                            if torch.cuda.is_available():
+                                writer.add_scalar("gpu/peak_mem_gb", torch.cuda.max_memory_allocated(dist.device) / 2**30, cur_nimg)
+                                torch.cuda.reset_peak_memory_stats()
+                        # Reset accumulators
+                        _timing_accum = {"data_load": 0.0, "compute": 0.0, "total": 0.0}
+                        _timing_accum_n = 0
                         # reset running mean of average loss
                         average_loss_running_mean = 0
                         n_average_loss_running_mean = 1
@@ -674,14 +702,17 @@ def main(cfg: DictConfig) -> None:
                                     // cfg.training.hp.lr_decay_rate
                                 )
                             current_lr = g["lr"]
-                            if dist.rank == 0:
-                                writer.add_scalar("learning_rate", current_lr, cur_nimg)
                         handle_and_clip_gradients(
                             model,
                             grad_clip_threshold=cfg.training.hp.grad_clip_threshold,
                         )
                     with nvtx.annotate("optimizer step", color="blue"):
                         optimizer.step()
+                    # Accumulate per-iteration timings (no GPU sync to avoid serializing the pipeline)
+                    _timing_accum["data_load"] += _iter_data_load
+                    _timing_accum["compute"] += _iter_compute
+                    _timing_accum["total"] += time.perf_counter() - _iter_start
+                    _timing_accum_n += 1
 
                     cur_nimg += cfg.training.hp.total_batch_size
                     done = cur_nimg >= cfg.training.hp.training_duration
@@ -795,38 +826,22 @@ def main(cfg: DictConfig) -> None:
                     dist.rank,
                     rank_0_only=True,
                 ):
-                    # Print stats if we crossed the printing threshold with this batch
                     tick_end_time = time.time()
                     fields = []
                     fields += [f"samples {cur_nimg:<9.1f}"]
                     fields += [f"training_loss {average_loss:<7.2f}"]
-                    fields += [
-                        f"training_loss_running_mean {average_loss_running_mean:<7.2f}"
-                    ]
+                    fields += [f"training_loss_running_mean {average_loss_running_mean:<7.2f}"]
                     fields += [f"learning_rate {current_lr:<7.8f}"]
                     fields += [f"total_sec {(tick_end_time - start_time):<7.1f}"]
-                    fields += [
-                        f"sec_per_tick {(tick_end_time - tick_start_time):<7.1f}"
-                    ]
-                    fields += [
-                        f"sec_per_sample {((tick_end_time - tick_start_time) / (cur_nimg - tick_start_nimg)):<7.2f}"
-                    ]
-                    fields += [
-                        f"cpu_mem_gb {(psutil.Process(os.getpid()).memory_info().rss / 2**30):<6.2f}"
-                    ]
+                    fields += [f"sec_per_tick {(tick_end_time - tick_start_time):<7.1f}"]
+                    fields += [f"sec_per_sample {((tick_end_time - tick_start_time) / max(cur_nimg - tick_start_nimg, 1)):<7.2f}"]
+                    fields += [f"cpu_mem_gb {(psutil.Process(os.getpid()).memory_info().rss / 2**30):<6.2f}"]
                     if torch.cuda.is_available():
-                        fields += [
-                            f"peak_gpu_mem_gb {(torch.cuda.max_memory_allocated(dist.device) / 2**30):<6.2f}"
-                        ]
-                        fields += [
-                            f"peak_gpu_mem_reserved_gb {(torch.cuda.max_memory_reserved(dist.device) / 2**30):<6.2f}"
-                        ]
-                        torch.cuda.reset_peak_memory_stats()
+                        fields += [f"peak_gpu_mem_gb {(torch.cuda.max_memory_allocated(dist.device) / 2**30):<6.2f}"]
+                        fields += [f"peak_gpu_mem_reserved_gb {(torch.cuda.max_memory_reserved(dist.device) / 2**30):<6.2f}"]
                     logger0.info(" ".join(fields))
 
                 # Save checkpoints
-                if dist.world_size > 1:
-                    torch.distributed.barrier()
                 if is_time_for_periodic_task(
                     cur_nimg,
                     cfg.training.io.save_checkpoint_freq,
@@ -835,6 +850,8 @@ def main(cfg: DictConfig) -> None:
                     dist.rank,
                     rank_0_only=True,
                 ):
+                    if dist.world_size > 1:
+                        torch.distributed.barrier()
                     save_checkpoint(
                         path=checkpoint_dir,
                         models=model,
