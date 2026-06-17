@@ -13,25 +13,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+results_dir: ./results/diffusion_cwb_${now:%Y%m%d_%H%M%S}
 
 hydra:
     job:
           chdir: false
           name: taiwan_diffusion
     run:
-          dir: ./output/${hydra:job.name}
+          dir: ${results_dir}/${hydra:job.name}
     searchpath:
           - pkg://conf/base # Do not modify
 
 # Base parameters for dataset, model, training, and validation
 defaults:
 
-    - dataset: cwb
+    - dataset: cwb_cut
     # The dataset type for training.
     # Accepted values:
     #   `gefs_hrrr`: full GEFS-HRRR dataset for continental US.
     #   `hrrr_mini`: smaller HRRR dataset (continental US), for fast experiments.
     #   `cwb`: full CWB dataset for Taiwan.
+    #   `cwb_cut`: a variant of the CWB dataset that returns a fixed spatial snippet.
     #   `custom`: user-defined dataset. Parameters need to be specified below.
 
     - model: diffusion
@@ -45,7 +48,7 @@ defaults:
     #     `lt_aware_patched_diffusion`: similar to `patched_diffusion` but
     #       with lead time conditioning
 
-    - model_size: normal
+    - model_size: mini
     # The model size configuration.
     # Accepted values:
     #     `normal`: normal model size
@@ -55,15 +58,22 @@ defaults:
     # The base training parameters. Determined by the model type.
 
 
+model:
+    model_args:
+        model_type: "SongUNet"
+        # Type of model architecture. Overrides default 'SongUNetPosEmbd'.
+    hr_mean_conditioning: false
+  # High-res mean (regression's output) as additional condition
+
 # Dataset parameters. Used for `custom` dataset type.
 # Modify or add below parameters that should be passed as argument to the
 # user-defined dataset class.
 dataset:
-    data_path: ./data/2023-01-24-cwb-4years.zarr
-
-model:
-    hr_mean_conditioning: false
-  # High-res mean (regression's output) as additional condition
+    data_path: ./data/cwa_dataset_storm.zarr
+    all_times: true
+    snippet_x_offset: 250
+    snippet_y_offset: 50
+    snippet_length: 128
 
 # Training parameters
 training:
@@ -73,19 +83,20 @@ training:
         lr_rampup: 10000000
         # Rampup for learning rate, in number of samples
     io:
-        regression_checkpoint_path: <path/to/checkpoint.mdlus>
-        # Path to load the regression checkpoint
+        regression_checkpoint_path: ./results/regression_cwb/taiwan_regression/checkpoints/<RegressionModel>.<nimg>.mdlus
+        # Path to load the regression checkpoint (train regression first)
+        results_dir: ${results_dir}
 
 # Additional parameters for validation
 validation:
     train: false
-    all_times: false    
+    all_times: false
 
 # Parameters for wandb logging
 wandb:
-    mode: offline
+    mode: disabled
     # Configure whether to use wandb: "offline", "online", "disabled"
-    results_dir: "./wandb"
+    results_dir: ${results_dir}/wandb
     # Directory to store wandb results
     watch_model: false
     # If true, wandb will track model parameters and gradients

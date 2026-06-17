@@ -18,7 +18,6 @@ import os
 import time
 import psutil
 from contextlib import nullcontext
-from datetime import datetime
 
 import hydra
 from hydra.utils import to_absolute_path
@@ -117,13 +116,6 @@ def main(cfg: DictConfig) -> None:
     # Initialize distributed environment for training
     DistributedManager.initialize()
     dist = DistributedManager()
-
-    # Give each run its own results directory by appending a timestamp to the
-    # base path. Resolved lazily, so it propagates through ${results_dir}
-    # interpolations to training.io.results_dir and wandb.results_dir.
-    if OmegaConf.select(cfg, "results_dir") is not None:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        cfg.results_dir = f"{cfg.results_dir}_{timestamp}"
 
     results_dir = cfg.training.io["results_dir"]
 

@@ -25,7 +25,7 @@
             "justMyCode": false,
             "args": [
                 "++training.hp.total_batch_size=2", 
-                "--config-name=config_training_carra2_diffusion_local.yaml",
+                "--config-name=config_training_taiwan_diffusion_local.yaml",
             ],
         },
         {

@@ -6,7 +6,8 @@
       "Bash(gcloud compute *)",
       "Bash(gcloud ai *)",
       "Bash(grep -iA2 -E \"strategy|flex|wait-duration|scheduling|dws\")",
-      "WebSearch"
+      "WebSearch",
+      "mcp__context7__query-docs"
     ]
   }
 }
