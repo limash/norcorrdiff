@@ -21,7 +21,7 @@ hr_mean_conditioning: True
 
 # Standard model parameters.
 model_args:
-  gridtype: "sinusoidal"
+  # gridtype: "sinusoidal"
   # Type of positional grid to use: 'sinusoidal', 'learnable', 'linear'.
   # Controls how positional information is encoded.
   # N_grid_channels: 4

@@ -62,7 +62,10 @@ model:
     model_args:
         model_type: "SongUNet"
         # Type of model architecture. Overrides default 'SongUNetPosEmbd'.
-    hr_mean_conditioning: false
+        embedding_type: "positional"
+        # Timestep/noise embedding. Overrides base default 'zero' (no noise
+        # conditioning) with DDPM++ sinusoidal embedding of sigma.
+    hr_mean_conditioning: true
   # High-res mean (regression's output) as additional condition
 
 # Dataset parameters. Used for `custom` dataset type.

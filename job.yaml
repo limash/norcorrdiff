@@ -54,5 +54,5 @@ workerPoolSpecs:
 # requested GPU frees up, instead of failing immediately on insufficient capacity.
 scheduling:
   strategy: FLEX_START
-  maxWaitDuration: 7200s
+  maxWaitDuration: 14400s
 
