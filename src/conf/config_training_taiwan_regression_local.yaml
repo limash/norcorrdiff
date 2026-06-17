@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-results_dir: ./results/regression_cwb_110626
+results_dir: ./results/regression_cwb
 
 hydra:
     job:

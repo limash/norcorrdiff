@@ -1,4 +1,4 @@
-results_dir: ./results/diffusion_carra2_050526
+results_dir: ./results/diffusion_carra2
 # Base directory for all outputs (hydra logs, tensorboard, wandb, checkpoints).
 # Change this to redirect all output to a different location.
 

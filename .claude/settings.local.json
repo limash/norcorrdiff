@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude mcp *)",
+      "WebFetch(domain:docs.cloud.google.com)",
+      "Bash(gcloud compute *)",
+      "Bash(gcloud ai *)",
+      "Bash(grep -iA2 -E \"strategy|flex|wait-duration|scheduling|dws\")",
+      "WebSearch"
+    ]
+  }
+}

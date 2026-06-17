@@ -40,6 +40,8 @@ perf:
     # "amp-{fp16,bf16}" activates Automatic Mixed Precision (AMP) with {float16,bfloat16}
     dataloader_workers: 4
     # DataLoader worker processes
+    prefetch_factor: 2
+    # Number of batches each worker prefetches (only used when dataloader_workers > 0)
     songunet_checkpoint_level: 0 # 0 means no checkpointing
     # Gradient checkpointing level, value is number of layers to checkpoint
 

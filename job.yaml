@@ -1,9 +1,13 @@
 workerPoolSpecs:
   - machineSpec:
-      machineType: a2-highgpu-1g
-      acceleratorType: NVIDIA_TESLA_A100
+      machineType: g2-standard-8
+      acceleratorType: NVIDIA_L4
       acceleratorCount: 1
     replicaCount: 1
+    diskSpec:
+      # Large SSD boot disk to hold the gcsfuse file cache (see startup script).
+      bootDiskType: pd-ssd
+      bootDiskSizeGb: 1000
     containerSpec:
       imageUri: "${IMAGE_URI}"
       command:
@@ -15,7 +19,30 @@ workerPoolSpecs:
           echo "Running GPU preflight checks"
           nvidia-smi
           python src/gpu_preflight.py
-          exec python src/train.py ++training.hp.total_batch_size=64 --config-name=config_training_taiwan_regression_gcp.yaml
+
+          # The auto-mounted /gcs path has no caching and is the data-loading
+          # bottleneck. Self-mount the bucket with gcsfuse file + metadata caching
+          # (cache lives on the SSD boot disk) so repeated chunk reads hit local disk.
+          echo "Mounting GCS bucket with caching"
+          mkdir -p /mnt/gcs-cache /mnt/gcs/norcorrdiff
+          cat > /tmp/gcsfuse.yaml <<'EOF'
+          cache-dir: /mnt/gcs-cache
+          file-cache:
+            max-size-mb: -1
+            cache-file-for-range-read: true
+          metadata-cache:
+            ttl-secs: -1
+            stat-cache-max-size-mb: -1
+            type-cache-max-size-mb: -1
+          implicit-dirs: true
+          EOF
+          gcsfuse --config-file /tmp/gcsfuse.yaml norcorrdiff /mnt/gcs/norcorrdiff
+          ls /mnt/gcs/norcorrdiff/ >/dev/null || { echo "ERROR: gcsfuse mount failed"; exit 1; }
+          echo "GCS bucket mounted at /mnt/gcs/norcorrdiff"
+
+          exec python src/train.py ++training.hp.total_batch_size=64 \
+            ++dataset.data_path=/mnt/gcs/norcorrdiff/taiwan_dataset/cwa_dataset/cwa_dataset.zarr \
+            --config-name=config_training_taiwan_regression_gcp.yaml
       env:
         - name: WANDB_API_KEY
           value: "${WANDB_API_KEY}"
@@ -23,4 +50,9 @@ workerPoolSpecs:
           value: "${WANDB_ENTITY}"
         - name: WANDB_PROJECT
           value: "${WANDB_PROJECT}"
+# Dynamic Workload Scheduler (flex-start): queue the job and start it when the
+# requested GPU frees up, instead of failing immediately on insufficient capacity.
+scheduling:
+  strategy: FLEX_START
+  maxWaitDuration: 7200s
 

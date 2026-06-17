@@ -1,4 +1,4 @@
-results_dir: ./results/regression_carra2_070526
+results_dir: ./results/regression_carra2
 # Base directory for all outputs (hydra logs, tensorboard, wandb, checkpoints).
 # Change this to redirect all output to a different location.
 
