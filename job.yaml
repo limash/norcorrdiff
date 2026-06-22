@@ -5,9 +5,8 @@ workerPoolSpecs:
       acceleratorCount: 1
     replicaCount: 1
     diskSpec:
-      # Large SSD boot disk to hold the gcsfuse file cache (see startup script).
       bootDiskType: pd-ssd
-      bootDiskSizeGb: 1000
+      bootDiskSizeGb: 200
     containerSpec:
       imageUri: "${IMAGE_URI}"
       command:
@@ -20,28 +19,8 @@ workerPoolSpecs:
           nvidia-smi
           python src/gpu_preflight.py
 
-          # The auto-mounted /gcs path has no caching and is the data-loading
-          # bottleneck. Self-mount the bucket with gcsfuse file + metadata caching
-          # (cache lives on the SSD boot disk) so repeated chunk reads hit local disk.
-          echo "Mounting GCS bucket with caching"
-          mkdir -p /mnt/gcs-cache /mnt/gcs/norcorrdiff
-          cat > /tmp/gcsfuse.yaml <<'EOF'
-          cache-dir: /mnt/gcs-cache
-          file-cache:
-            max-size-mb: -1
-            cache-file-for-range-read: true
-          metadata-cache:
-            ttl-secs: -1
-            stat-cache-max-size-mb: -1
-            type-cache-max-size-mb: -1
-          implicit-dirs: true
-          EOF
-          gcsfuse --config-file /tmp/gcsfuse.yaml norcorrdiff /mnt/gcs/norcorrdiff
-          ls /mnt/gcs/norcorrdiff/ >/dev/null || { echo "ERROR: gcsfuse mount failed"; exit 1; }
-          echo "GCS bucket mounted at /mnt/gcs/norcorrdiff"
-
           exec python src/train.py ++training.hp.total_batch_size=64 \
-            ++dataset.data_path=/mnt/gcs/norcorrdiff/taiwan_dataset/cwa_dataset/cwa_dataset.zarr \
+            ++dataset.data_path=/gcs/norcorrdiff-us/taiwan_dataset/cwa_dataset/cwa_dataset.zarr \
             --config-name=config_training_taiwan_regression_gcp.yaml
       env:
         - name: WANDB_API_KEY

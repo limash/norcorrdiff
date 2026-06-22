@@ -8,7 +8,9 @@
       "Bash(grep -iA2 -E \"strategy|flex|wait-duration|scheduling|dws\")",
       "WebSearch",
       "mcp__context7__query-docs",
-      "WebFetch(domain:arxiv.org)"
+      "WebFetch(domain:arxiv.org)",
+      "Bash(gcloud auth *)",
+      "Bash(timeout 60 gcloud storage du -s gs://norcorrdiff-us/taiwan_dataset/cwa_dataset/cwa_dataset.zarr)"
     ]
   }
 }

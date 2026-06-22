@@ -23,17 +23,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.11-venv \
  && rm -rf /var/lib/apt/lists/*
 
-# Cloud Storage FUSE: lets the Vertex job self-mount the GCS bucket with file/metadata
-# caching (the auto-mounted /gcs path is uncached and is the training data bottleneck).
-RUN apt-get update && apt-get install -y --no-install-recommends gnupg \
- && echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt gcsfuse-jammy main" \
-      > /etc/apt/sources.list.d/gcsfuse.list \
- && curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg \
-      | gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg \
- && apt-get update && apt-get install -y --no-install-recommends gcsfuse \
- && gcsfuse --version \
- && rm -rf /var/lib/apt/lists/*
-
 RUN python3.11 -m venv $VIRTUAL_ENV \
  && $VIRTUAL_ENV/bin/python -m pip install --upgrade pip setuptools wheel
 

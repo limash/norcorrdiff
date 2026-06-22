@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-results_dir: /gcs/norcorrdiff/results/regression_cwb_${now:%Y%m%d_%H%M%S}
+results_dir: /gcs/norcorrdiff-us/results/regression_cwb_${now:%Y%m%d_%H%M%S}
 
 hydra:
     job:
@@ -68,7 +68,7 @@ model:
 # Modify or add below parameters that should be passed as argument to the
 # user-defined dataset class.
 dataset:
-    data_path: /gcs/norcorrdiff/taiwan_dataset/cwa_dataset/cwa_dataset.zarr
+    data_path: /gcs/norcorrdiff-us/taiwan_dataset/cwa_dataset/cwa_dataset.zarr
     snippet_x_offset: 250
     snippet_y_offset: 50
     snippet_length: 128

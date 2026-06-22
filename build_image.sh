@@ -3,8 +3,8 @@
 set -euo pipefail
 
 PROJECT_ID="niva-cd"
-REGION="europe-west1"
-REPO="vertex-images"
+REGION="us-central1"
+REPO="images-us"
 IMAGE="norcorrdiff"
 
 LATEST_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE}:latest"

@@ -3,8 +3,8 @@
 set -euo pipefail
 
 PROJECT_ID="${PROJECT_ID:-niva-cd}"
-REGION="${REGION:-europe-west1}"
-REPO="${REPO:-vertex-images}"
+REGION="${REGION:-us-central1}"
+REPO="${REPO:-images-us}"
 IMAGE="${IMAGE:-norcorrdiff}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 IMAGE_URI="${IMAGE_URI:-${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE}:${IMAGE_TAG}}"
@@ -19,6 +19,6 @@ env \
   envsubst '$WANDB_API_KEY $WANDB_ENTITY $WANDB_PROJECT $IMAGE_URI' < job.yaml | \
   gcloud ai custom-jobs create \
     --display-name="norcorrdiff-regression" \
-    --region="europe-west4" \
+    --region="${REGION}" \
     --config=-
 

@@ -43,8 +43,8 @@ defaults:
 # Modify or add below parameters that should be passed as argument to the
 # user-defined dataset class.
 dataset:
-    data_path: /gcs/norcorrdiff/input_data_era5tocarra2/data.zarr
-    stats_file: /gcs/norcorrdiff/input_data_era5tocarra2/stats.zarr
+    data_path: /gcs/norcorrdiff-us/input_data_era5tocarra2/data.zarr
+    stats_file: /gcs/norcorrdiff-us/input_data_era5tocarra2/stats.zarr
 
 # Training parameters
 training:
@@ -56,13 +56,13 @@ training:
         # Rampup for learning rate, in number of samples
     io:
         regression_checkpoint_path: null
-        results_dir: /gcs/norcorrdiff/results/carra2_regression
+        results_dir: /gcs/norcorrdiff-us/results/carra2_regression
 
 # Parameters for wandb logging
 wandb:
     mode: online
     # Configure whether to use wandb: "offline", "online", "disabled"
-    results_dir: "/gcs/norcorrdiff/results/wandb/carra2_regression"
+    results_dir: "/gcs/norcorrdiff-us/results/wandb/carra2_regression"
     # Directory to store wandb results
     watch_model: false
     # If true, wandb will track model parameters and gradients
