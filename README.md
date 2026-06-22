@@ -64,7 +64,7 @@ gcloud compute ssh cut-zarr --zone=us-central1-a
 #   --- on the VM ---
 sudo apt-get update && sudo apt-get install -y python3-pip git tmux
 git clone <this-repo-url> norcorrdiff && cd norcorrdiff
-pip3 install --break-system-packages zarr gcsfs numcodecs numpy
+pip3 install --break-system-packages 'zarr<3' gcsfs numcodecs numpy
 tmux new -s cut
 python3 scripts/make_cut_zarr.py --workers 64
 #   (defaults already target the norcorrdiff-us src/dst paths and the
@@ -76,6 +76,11 @@ gcloud compute instances delete cut-zarr --zone=us-central1-a
 
 Notes:
 
+- Use zarr v2 (`'zarr<3'`): the store is zarr v2 format and both this script
+  and the training code use the v2 API. zarr v3 fails (`zarr.copy` is
+  unimplemented) and would write a v3-format store the training container
+  can't read. If v3 is already installed, downgrade with
+  `pip3 install --break-system-packages 'zarr<3'`.
 - ADC works automatically on the VM via the attached service account
   (`--scopes=storage-full`). No `gcloud auth application-default login` needed.
 - The run is resumable: if it dies, re-run with `--start <N>` (the index from

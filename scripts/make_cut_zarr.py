@@ -143,7 +143,18 @@ def main():
         if resume and key in dst:
             continue
         logger.info("Copying verbatim: %s", key)
-        zarr.copy(src[key], dst, name=key, if_exists="replace")
+        s = src[key]
+        d = dst.create_dataset(
+            key,
+            shape=s.shape,
+            chunks=s.chunks,
+            dtype=s.dtype,
+            compressor=s.compressor,
+            fill_value=s.fill_value,
+            overwrite=True,
+        )
+        d[...] = s[...]
+        d.attrs.update(dict(s.attrs))
 
     # 2) Crop the small 2D coordinate grids in one shot.
     for key in ("XLAT", "XLONG"):
