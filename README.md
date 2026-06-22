@@ -38,3 +38,49 @@ This avoids long "frozen" runs that are actually CPU-only training.
 - `WANDB_PROJECT`
 - `IMAGE_URI`
 
+## Build the cut dataset store (one-off)
+
+`scripts/make_cut_zarr.py` builds a spatially-cropped copy of the CWB Zarr
+store. The source store chunks every variable as one full timestep (all
+channels, full 450×450, uncompressed).
+
+The script streams `gs://` → `gs://` one timestep at a time, so **nothing is
+staged on local disk**. Run it on a **CPU VM in the bucket's region** (not
+Vertex — this is an I/O job with no GPU): in-region GCS traffic is free and
+fast, and the VM's service account provides credentials automatically.
+
+```bash
+# 1) Find the bucket region, then create a CPU VM in a matching region/zone.
+gcloud storage buckets describe gs://norcorrdiff-us --format='value(location)'
+
+gcloud compute instances create cut-zarr \
+    --zone=us-central1-a \
+    --machine-type=n2-standard-16 \
+    --scopes=storage-full \
+    --image-family=debian-12 --image-project=debian-cloud
+
+# 2) On the VM: get the code + deps, then run inside tmux (the job takes a while).
+gcloud compute ssh cut-zarr --zone=us-central1-a
+#   --- on the VM ---
+sudo apt-get update && sudo apt-get install -y python3-pip git tmux
+git clone <this-repo-url> norcorrdiff && cd norcorrdiff
+pip3 install --break-system-packages zarr gcsfs numcodecs numpy
+tmux new -s cut
+python3 scripts/make_cut_zarr.py --workers 64
+#   (defaults already target the norcorrdiff-us src/dst paths and the
+#    snippet (x=250, y=50, length=128). Detach from tmux with Ctrl-b d.)
+
+# 3) When it finishes, tear the VM down.
+gcloud compute instances delete cut-zarr --zone=us-central1-a
+```
+
+Notes:
+
+- ADC works automatically on the VM via the attached service account
+  (`--scopes=storage-full`). No `gcloud auth application-default login` needed.
+- The run is resumable: if it dies, re-run with `--start <N>` (the index from
+  the last progress log) to keep the already-written timesteps.
+- `--clevel 0` disables lz4 compression; `--src` / `--dst` override the paths
+  (e.g. to build a cut copy of the local `cwa_dataset_storm.zarr` for the
+  `*_local.yaml` configs, run it inside the dev container with local paths).
+

@@ -24,7 +24,7 @@ Consequences:
 ## Configuration (Hydra)
 
 Top-level configs are in `src/conf/config_*.yaml`. Each composes from base groups under `src/conf/base/` (referenced via `searchpath: pkg://conf/base` — do not modify that line). Defaults pick one option per group:
-- `dataset/` (carra2, cwb, cwb_cut, gefs_hrrr, hrrr_mini, custom)
+- `dataset/` (carra2, cwb, gefs_hrrr, hrrr_mini, custom)
 - `model/` (the six model names above)
 - `model_size/` (`mini` for fast experiments, `normal`)
 - `training/` — selected by `training: ${model}` interpolation, so training hyperparameters follow the chosen model type

@@ -10,7 +10,11 @@
       "mcp__context7__query-docs",
       "WebFetch(domain:arxiv.org)",
       "Bash(gcloud auth *)",
-      "Bash(timeout 60 gcloud storage du -s gs://norcorrdiff-us/taiwan_dataset/cwa_dataset/cwa_dataset.zarr)"
+      "Bash(timeout 60 gcloud storage du -s gs://norcorrdiff-us/taiwan_dataset/cwa_dataset/cwa_dataset.zarr)",
+      "Bash(python3 -m py_compile scripts/make_cut_zarr.py)",
+      "Bash(python3 scripts/make_cut_zarr.py --help)",
+      "Bash(python3 -m py_compile src/datasets/cwb.py src/datasets/dataset.py)",
+      "Bash(python3 -m py_compile src/datasets/cwb.py src/datasets/dataset.py scripts/make_cut_zarr.py)"
     ]
   }
 }
