@@ -1,7 +1,3 @@
-# SPDX-FileCopyrightText: Copyright (c) 2023 - 2026 NVIDIA CORPORATION & AFFILIATES.
-# SPDX-FileCopyrightText: All rights reserved.
-# SPDX-License-Identifier: Apache-2.0
-#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -109,6 +105,14 @@ def open_store(path, mode):
 
 def main():
     args = parse_args()
+    if int(zarr.__version__.split(".")[0]) >= 3:
+        raise RuntimeError(
+            f"zarr {zarr.__version__} detected, but this tool needs zarr v2: "
+            "the source is a v2-format store, the v2 API is used here, and a "
+            "v2 store stays readable by both zarr v2 and v3 (v3 output would "
+            "not be readable by a v2 training container). "
+            "Install with: pip install 'zarr<3'"
+        )
     x0, y0, L = args.x_offset, args.y_offset, args.length
     ysl, xsl = slice(y0, y0 + L), slice(x0, x0 + L)
 
