@@ -14,7 +14,9 @@
       "Bash(python3 -m py_compile scripts/make_cut_zarr.py)",
       "Bash(python3 scripts/make_cut_zarr.py --help)",
       "Bash(python3 -m py_compile src/datasets/cwb.py src/datasets/dataset.py)",
-      "Bash(python3 -m py_compile src/datasets/cwb.py src/datasets/dataset.py scripts/make_cut_zarr.py)"
+      "Bash(python3 -m py_compile src/datasets/cwb.py src/datasets/dataset.py scripts/make_cut_zarr.py)",
+      "Bash(timeout 25 gsutil du -s gs://norcorrdiff-us/taiwan_dataset/cwa_dataset/cwa_dataset_cut.zarr)",
+      "Bash(python3 -m py_compile scripts/stage_zarr.py)"
     ]
   }
 }
