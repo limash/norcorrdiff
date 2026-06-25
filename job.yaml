@@ -31,7 +31,7 @@ workerPoolSpecs:
           du -sh "$DST"
 
           exec python src/train.py ++training.hp.total_batch_size=64 \
-            --config-name=config_training_taiwan_regression_gcp.yaml
+            --config-name=${CONFIG_NAME}
       env:
         - name: WANDB_API_KEY
           value: "${WANDB_API_KEY}"

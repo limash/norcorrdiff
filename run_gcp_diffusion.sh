@@ -16,10 +16,9 @@ env \
   WANDB_ENTITY="${WANDB_ENTITY:-}" \
   WANDB_PROJECT="${WANDB_PROJECT:-}" \
   IMAGE_URI="${IMAGE_URI}" \
-  CONFIG_NAME="config_training_taiwan_regression_gcp.yaml" \
+  CONFIG_NAME="config_training_taiwan_diffusion_gcp.yaml" \
   envsubst '$WANDB_API_KEY $WANDB_ENTITY $WANDB_PROJECT $IMAGE_URI $CONFIG_NAME' < job.yaml | \
   gcloud ai custom-jobs create \
-    --display-name="norcorrdiff-regression" \
+    --display-name="norcorrdiff-diffusion" \
     --region="${REGION}" \
     --config=-
-

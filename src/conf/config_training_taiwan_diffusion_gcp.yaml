@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-results_dir: ./results/diffusion_cwb_${now:%Y%m%d_%H%M%S}
+results_dir: /gcs/norcorrdiff-us/results/diffusion_cwb_${now:%Y%m%d_%H%M%S}
 
 hydra:
     job:
@@ -57,6 +57,7 @@ defaults:
     # The base training parameters. Determined by the model type.
 
 
+# Model parameters
 model:
     model_args:
         model_type: "SongUNetPosEmbd"
@@ -73,16 +74,19 @@ model:
         # in_channels, causing a channel mismatch (20 expected, 24 received).
         # Set to 0 to disable the grid embedding since we have no lat/lon input.
     hr_mean_conditioning: true
-  # High-res mean (regression's output) as additional condition
+    # High-res mean (regression's output) as additional condition
 
 # Dataset parameters. Used for `custom` dataset type.
 # Modify or add below parameters that should be passed as argument to the
 # user-defined dataset class.
 dataset:
-    data_path: ./data/cwa_dataset_storm_cut.zarr
+    data_path: /workspace/data_local/cwa_dataset_cut.zarr
     # Pre-cut store (see scripts/make_cut_zarr.py): the 128x128 snippet is baked
     # into the data, so it is read as a plain `cwb` dataset.
-    all_times: true
+    # Staged to local SSD by job.yaml before training (random small-object reads
+    # over the /gcs FUSE mount are latency-bound and starve the GPU). The
+    # canonical store lives at
+    # gs://norcorrdiff-us/taiwan_dataset/cwa_dataset/cwa_dataset_cut.zarr
     img_shape_x: 128
     img_shape_y: 128
     add_grid: false
@@ -90,14 +94,17 @@ dataset:
 
 # Training parameters
 training:
+    perf:
+        songunet_checkpoint_level: 1
+        dataloader_workers: 8
+        prefetch_factor: 6
     hp:
         training_duration: 200000000
         # Training duration based on the number of processed samples
         lr_rampup: 10000000
         # Rampup for learning rate, in number of samples
     io:
-        regression_checkpoint_path: ./results/regression_cwb/taiwan_regression/checkpoints/<RegressionModel>.<nimg>.mdlus
-        # Path to load the regression checkpoint (train regression first)
+        regression_checkpoint_path: /gcs/norcorrdiff-us/results/regression_cwb_20260623_130422/checkpoints_regression/CorrDiffRegressionUNet.0.505024.mdlus
         results_dir: ${results_dir}
 
 # Additional parameters for validation
@@ -107,7 +114,7 @@ validation:
 
 # Parameters for wandb logging
 wandb:
-    mode: disabled
+    mode: online
     # Configure whether to use wandb: "offline", "online", "disabled"
     results_dir: ${results_dir}/wandb
     # Directory to store wandb results
