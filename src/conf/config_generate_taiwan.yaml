@@ -23,6 +23,22 @@ hydra:
     searchpath:
           - pkg://conf/base # Do not modify
 
+# How to run locally with Docker:
+#
+#   # 1. Build the image (once, or after Dockerfile changes):
+#   docker compose build norcorrdiff
+#
+#   # 2. Download checkpoints to ~/norcorrdiff_results (mounted at /workspace/results):
+#   gsutil cp "gs://norcorrdiff-us/results/regression_cwb_20260623_130422/checkpoints_regression/CorrDiffRegressionUNet.0.505024.mdlus" \
+#       ~/norcorrdiff_results/regression_cwb_20260623_130422/checkpoints_regression/
+#   gsutil cp "gs://norcorrdiff-us/results/diffusion_cwb_20260626_095313/checkpoints_diffusion/EDMPrecondSuperResolution.0.1445056.mdlus" \
+#       ~/norcorrdiff_results/diffusion_cwb_20260626_095313/checkpoints_diffusion/
+#
+#   # 3. Run generation:
+#   docker compose run --rm norcorrdiff \
+#       python src/generate.py --config-name=config_generate_taiwan.yaml \
+#       ++generation.io.output_filename=/workspace/results/generate_taiwan/output.nc
+
 # Base parameters for dataset, model, and generation
 defaults:
 
@@ -45,7 +61,14 @@ defaults:
 # Modify or add below parameters that should be passed as argument to the
 # user-defined dataset class.
 dataset:
-    data_path: ./data/2023-01-24-cwb-4years.zarr
+    data_path: /workspace/data/cwa_dataset_cut.zarr
+    # Docker: persistent mount ~/ml-ds_data -> /workspace/data (see docker-compose.yml).
+    # GCP job.yaml: change to /workspace/data_local/cwa_dataset_cut.zarr (staged to local SSD).
+    # If the cut store isn't staged yet: scripts/stage_zarr.py --src gs://norcorrdiff-us/taiwan_dataset/cwa_dataset/cwa_dataset_cut.zarr --dst /workspace/data/cwa_dataset_cut.zarr
+    img_shape_x: 128
+    img_shape_y: 128
+    add_grid: false
+    ds_factor: 1
     train: False
     all_times: True
 
@@ -56,22 +79,44 @@ generation:
     # int, number of ensembles to generate per input
     seed_batch_size: 1
     # int, size of the batched inference
-    hr_mean_conditioning: false
-    # Whether to use hr_mean_conditioning
+    hr_mean_conditioning: true
+    # Must match training config (config_training_taiwan_diffusion_gcp.yaml: hr_mean_conditioning: true)
     times:
         - 2021-02-02T00:00:00
-        - 2021-03-02T00:00:00
-        - 2021-04-02T00:00:00
+        - 2021-02-02T01:00:00
+        - 2021-02-02T02:00:00
+        - 2021-02-02T03:00:00
+        - 2021-02-02T04:00:00
+        - 2021-02-02T05:00:00
+        - 2021-02-02T06:00:00
+        - 2021-02-02T07:00:00
+        - 2021-02-02T08:00:00
+        - 2021-02-02T09:00:00
+        - 2021-02-02T10:00:00
+        - 2021-02-02T11:00:00
+        - 2021-02-02T12:00:00
+        - 2021-02-02T13:00:00
+        - 2021-02-02T14:00:00
+        - 2021-02-02T15:00:00
+        - 2021-02-02T16:00:00
+        - 2021-02-02T17:00:00
+        - 2021-02-02T18:00:00
+        - 2021-02-02T19:00:00
+        - 2021-02-02T20:00:00
+        - 2021-02-02T21:00:00
+        - 2021-02-02T22:00:00
+        - 2021-02-02T23:00:00
         # hurricane
-        - 2021-09-12T00:00:00
-        - 2021-09-12T12:00:00
+        # - 2021-09-12T00:00:00
+        # - 2021-09-12T12:00:00
     # List[str], time stamps in ISO 8601 format. Replace and list desired target
     # time stamps.
     io:
-        res_ckpt_filename: <diffusion_checkpoint.mdlus> 
-        # Path to checkpoint file for the diffusion model  
-        reg_ckpt_filename: <regression_checkpoint.mdlus>
-        # Path to checkpoint filename for the mean predictor model
+        res_ckpt_filename: /workspace/results/diffusion_cwb_20260626_095313/checkpoints_diffusion/EDMPrecondSuperResolution.0.1445056.mdlus
+        # Diffusion model trained with config_training_taiwan_diffusion_gcp.yaml.
+        # Replace <LATEST> with the highest-nimg checkpoint filename (see step 2 above).
+        reg_ckpt_filename: /workspace/results/regression_cwb_20260623_130422/checkpoints_regression/CorrDiffRegressionUNet.0.505024.mdlus
+        # Regression model used as conditioning during diffusion training.
 
 # Parameters for wandb logging
 wandb:
