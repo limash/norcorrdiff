@@ -4,7 +4,16 @@ import numpy as np
 from IPython.display import HTML
 
 
-def plot_comparison(truth, pred, output_channels, time_label, channel_idx=0, cmap="viridis"):
+def plot_comparison(
+    truth,
+    pred,
+    output_channels,
+    time_label,
+    channel_idx=0,
+    cmap="viridis",
+    input_lr=None,
+    input_label=None,
+):
     """Truth / prediction / error (pred - truth) for one sample/channel.
 
     Args:
@@ -14,6 +23,9 @@ def plot_comparison(truth, pred, output_channels, time_label, channel_idx=0, cma
         time_label: string or datetime for the title
         channel_idx: which output channel to plot
         cmap: colormap for truth and prediction panels
+        input_lr: optional (H_lr, W_lr) numpy array — ERA5 input in physical units;
+            if provided, a leading panel is prepended showing the low-res input
+        input_label: title for the input_lr panel (defaults to "ERA5 input")
     """
     t, p = truth[channel_idx], pred[channel_idx]
     err = p - t
@@ -22,17 +34,23 @@ def plot_comparison(truth, pred, output_channels, time_label, channel_idx=0, cma
     vmin, vmax = min(t.min(), p.min()), max(t.max(), p.max())
     emax = np.abs(err).max()
 
-    fig, axes = plt.subplots(1, 3, figsize=(18, 6))
-    for ax, arr, title, cm, kw in (
-        (axes[0], t, "truth", cmap, dict(vmin=vmin, vmax=vmax)),
-        (axes[1], p, "prediction", cmap, dict(vmin=vmin, vmax=vmax)),
-        (axes[2], err, "error (pred - truth)", "RdBu_r", dict(vmin=-emax, vmax=emax)),
-    ):
-        im = ax.imshow(arr, cmap=cm, origin="upper", **kw)
+    panels = [
+        (t, "truth", cmap, dict(vmin=vmin, vmax=vmax)),
+        (p, "prediction", cmap, dict(vmin=vmin, vmax=vmax)),
+        (err, "error (pred - truth)", "RdBu_r", dict(vmin=-emax, vmax=emax)),
+    ]
+    if input_lr is not None:
+        lr_title = input_label if input_label is not None else "ERA5 input"
+        panels.insert(0, (input_lr, lr_title, cmap, dict(vmin=vmin, vmax=vmax)))
+
+    n_panels = len(panels)
+    fig, axes = plt.subplots(1, n_panels, figsize=(6 * n_panels, 6))
+    for ax, (arr, title, cm, kw) in zip(axes, panels):
+        im = ax.imshow(arr, cmap=cm, origin="lower", **kw)
         plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
         ax.set_title(title)
-        ax.set_xlabel("x")
-        ax.set_ylabel("y")
+        ax.set_xlabel("x (west→east)")
+        ax.set_ylabel("y (south→north)")
 
     rmse = np.sqrt(np.mean(err**2))
     fig.suptitle(f"{label}  —  {time_label}   (RMSE={rmse:.3g})")
@@ -40,7 +58,16 @@ def plot_comparison(truth, pred, output_channels, time_label, channel_idx=0, cma
     plt.show()
 
 
-def plot_ensemble(truth, ensemble, output_channels, time_label, channel_idx=0, cmap="viridis"):
+def plot_ensemble(
+    truth,
+    ensemble,
+    output_channels,
+    time_label,
+    channel_idx=0,
+    cmap="viridis",
+    input_lr=None,
+    input_label=None,
+):
     """Truth / ensemble-mean / ensemble-std / mean-error for one diffusion sample/channel.
 
     Args:
@@ -50,6 +77,9 @@ def plot_ensemble(truth, ensemble, output_channels, time_label, channel_idx=0, c
         time_label: string or datetime for the title
         channel_idx: which output channel to plot
         cmap: colormap for truth and mean panels
+        input_lr: optional (H_lr, W_lr) numpy array — ERA5 input in physical units;
+            if provided, a leading panel is prepended showing the low-res input
+        input_label: title for the input_lr panel (defaults to "ERA5 input")
     """
     t = truth[channel_idx]
     ens = ensemble[:, channel_idx]  # (N, H, W)
@@ -63,18 +93,24 @@ def plot_ensemble(truth, ensemble, output_channels, time_label, channel_idx=0, c
     vmin, vmax = min(t.min(), mean.min()), max(t.max(), mean.max())
     emax = np.abs(err).max()
 
-    fig, axes = plt.subplots(1, 4, figsize=(24, 6))
-    for ax, arr, title, cm, kw in (
-        (axes[0], t, "truth", cmap, dict(vmin=vmin, vmax=vmax)),
-        (axes[1], mean, "ensemble mean", cmap, dict(vmin=vmin, vmax=vmax)),
-        (axes[2], std, "ensemble std", "YlOrRd", {}),
-        (axes[3], err, "mean error", "RdBu_r", dict(vmin=-emax, vmax=emax)),
-    ):
-        im = ax.imshow(arr, cmap=cm, origin="upper", **kw)
+    panels = [
+        (t, "truth", cmap, dict(vmin=vmin, vmax=vmax)),
+        (mean, "ensemble mean", cmap, dict(vmin=vmin, vmax=vmax)),
+        (std, "ensemble std", "YlOrRd", {}),
+        (err, "mean error", "RdBu_r", dict(vmin=-emax, vmax=emax)),
+    ]
+    if input_lr is not None:
+        lr_title = input_label if input_label is not None else "ERA5 input"
+        panels.insert(0, (input_lr, lr_title, cmap, dict(vmin=vmin, vmax=vmax)))
+
+    n_panels = len(panels)
+    fig, axes = plt.subplots(1, n_panels, figsize=(6 * n_panels, 6))
+    for ax, (arr, title, cm, kw) in zip(axes, panels):
+        im = ax.imshow(arr, cmap=cm, origin="lower", **kw)
         plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
         ax.set_title(title)
-        ax.set_xlabel("x")
-        ax.set_ylabel("y")
+        ax.set_xlabel("x (west→east)")
+        ax.set_ylabel("y (south→north)")
 
     rmse = np.sqrt(np.mean(err**2))
     fig.suptitle(f"{label}  —  {time_label}   (mean RMSE={rmse:.3g}, N={len(ensemble)})")
@@ -109,11 +145,11 @@ def plot_variable(dataset, source, channel_idx, sample_idx=0, predict_fn=None, c
     label = f"{ch.name} {ch.level}".strip()
 
     fig, ax = plt.subplots(figsize=(7, 6))
-    im = ax.imshow(arr, cmap=cmap, origin="upper")
+    im = ax.imshow(arr, cmap=cmap, origin="lower")
     plt.colorbar(im, ax=ax, label=f"{label} (physical units)")
     ax.set_title(f"{source}  [{label}]  —  sample {sample_idx}")
-    ax.set_xlabel("x")
-    ax.set_ylabel("y")
+    ax.set_xlabel("x (west→east)")
+    ax.set_ylabel("y (south→north)")
     plt.tight_layout()
     plt.show()
 
@@ -159,11 +195,11 @@ def animate_variable(
     vmin, vmax = all_frames.min(), all_frames.max()
 
     fig, ax = plt.subplots(figsize=(7, 6))
-    im = ax.imshow(all_frames[0], cmap=cmap, origin="upper", vmin=vmin, vmax=vmax)
+    im = ax.imshow(all_frames[0], cmap=cmap, origin="lower", vmin=vmin, vmax=vmax)
     plt.colorbar(im, ax=ax, label=f"{label} (physical units)")
     title = ax.set_title("")
-    ax.set_xlabel("x")
-    ax.set_ylabel("y")
+    ax.set_xlabel("x (west→east)")
+    ax.set_ylabel("y (south→north)")
     plt.tight_layout()
 
     def update(i):
@@ -223,11 +259,11 @@ def animate_wind_speed(dataset, source, predict_fn=None, cmap="viridis", interva
     vmin, vmax = speed_frames.min(), speed_frames.max()
 
     fig, ax = plt.subplots(figsize=(7, 6))
-    im = ax.imshow(speed_frames[0], cmap=cmap, origin="upper", vmin=vmin, vmax=vmax)
+    im = ax.imshow(speed_frames[0], cmap=cmap, origin="lower", vmin=vmin, vmax=vmax)
     plt.colorbar(im, ax=ax, label="wind speed (physical units)")
     title = ax.set_title("")
-    ax.set_xlabel("x")
-    ax.set_ylabel("y")
+    ax.set_xlabel("x (west→east)")
+    ax.set_ylabel("y (south→north)")
     plt.tight_layout()
 
     def update(i):
